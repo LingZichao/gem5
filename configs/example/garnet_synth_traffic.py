@@ -120,6 +120,20 @@ parser.add_argument(
                         Set to -1 to inject randomly in all vnets.",
 )
 
+parser.add_argument(
+    "--buffers-per-data-vc",
+    type=int,
+    default=4,
+    help="Number of buffer entries per data virtual channel",
+)
+
+parser.add_argument(
+    "--buffers-per-ctrl-vc",
+    type=int,
+    default=1,
+    help="Number of buffer entries per control virtual channel",
+)
+
 #
 # Add the ruby specific and protocol specific options
 #
@@ -166,6 +180,7 @@ for ruby_port in system.ruby._cpu_ports:
     # Tie the cpu test ports to the ruby cpu port
     #
     cpus[i].test = ruby_port.in_ports
+    # ruby_port.max_outstanding_requests = 102400
     i += 1
 
 # -----------------------
@@ -176,7 +191,7 @@ root = Root(full_system=False, system=system)
 root.system.mem_mode = "timing"
 
 # Not much point in this being higher than the L1 latency
-m5.ticks.setGlobalFrequency("1ps")
+m5.ticks.setGlobalFrequency("1ns")
 
 # instantiate configuration
 m5.instantiate()

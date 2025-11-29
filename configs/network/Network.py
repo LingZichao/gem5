@@ -171,6 +171,8 @@ def init_network(options, network, InterfaceClass):
         network.vcs_per_vnet = options.vcs_per_vnet
         network.ni_flit_size = options.link_width_bits / 8
         network.routing_algorithm = options.routing_algorithm
+        network.buffers_per_data_vc = options.buffers_per_data_vc
+        network.buffers_per_ctrl_vc = options.buffers_per_ctrl_vc
         network.garnet_deadlock_threshold = options.garnet_deadlock_threshold
 
         # Create Bridges and connect them to the corresponding links
