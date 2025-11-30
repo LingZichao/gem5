@@ -5,10 +5,10 @@ Utility to sweep Garnet synthetic traffic injection rates and plot the results.
 Example usage:
 
     python3 util/garnet_injection_scan.py \
-        --gem5-binary build/NULL/gem5.opt \
+        --gem5-binary build/Garnet_standalone/gem5.debug \
         --config configs/example/garnet_synth_traffic.py \
         --common-args "--num-cpus=16 --num-dirs=16 --network=garnet \
-                       --topology=Mesh_XY --mesh-rows=4 --sim-cycles=100000 \
+                       --topology=Mesh_XY --mesh-rows=4 --sim-cycles=1000 \
                        --router-latency=4 --synthetic=uniform_random \
                        --inj-vnet=2 --routing-algorithm=0"
 """
@@ -79,19 +79,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--inj-start",
         type=float,
-        default=0.005,
+        default=0.1,
         help="Starting injection rate (default: %(default)s)",
     )
     parser.add_argument(
         "--inj-stop",
         type=float,
-        default=0.20,
+        default=0.9,
         help="Final injection rate (inclusive, default: %(default)s)",
     )
     parser.add_argument(
         "--inj-step",
         type=float,
-        default=0.005,
+        default=0.1,
         help="Injection rate step size (default: %(default)s)",
     )
     parser.add_argument(
