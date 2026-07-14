@@ -1,154 +1,252 @@
-# UACC AXI 突发感知 D2D 拥塞模型与实验规范
+# UACC 突发感知拥塞模型
 
-## 1. 最终选择
+## 1. 目标与范围
 
-UACC 采用以下混合模型：
+本文档定义 UACC congestion-aware allocator 的最终模型及实验要求，并与 [plan.md](./plan.md) 的 classic timing 实现保持一致。
 
-> **AXI-transaction-level G/G/1 moment approximation + measured queue feedback**
+模型用于回答：增加远端 cache way 后，容量收益是否大于新增 D2D 拥塞代价。
 
-本文将其称为 **Burst-Aware Moment-Based Queueing Predictor with Runtime Calibration**。
+本轮范围包括：
 
-本轮论文修改采用以下明确语义：
+- gem5 classic timing mode；
+- `UACCController` profiling window；
+- ATD/reuse-distance 预测；
+- `SerialLink` 和共享 `NoncoherentXBar`；
+- packet 级到达、服务和实际排队统计；
+- G/G/1 moment approximation 与运行时反馈；
+- 合成流量和真实 workload 验证。
 
-- 到达过程 $A$：AXI transaction 开始进入被建模 D2D 瓶颈队列的过程。
-- 服务过程 $G$：一个获得链路服务资格的 AXI transaction 实际占用瓶颈资源的时间分布，包括可变 burst length，但不包括排队等待时间。
-- feedback：实际 enqueue-to-service delay、queue occupancy、buffer-full 和 backpressure 统计。
-- 解析模型负责预测尚未执行的候选 allocation；feedback 负责校准模型无法表达的相关性和有限缓冲行为。
+本轮不包括：
 
-该模型的定位不是精确重建任意 D2D 流量的完整延迟分布，而是在线预测候选 UACC allocation 的拥塞风险，可靠判断增加远端容量是否仍有正收益，并在突发流量、有限缓冲和反压下避免把链路推入饱和区。
+- AXI 协议或 channel-level 建模；
+- 完整 GGeo/maximum-entropy queueing network；
+- Ruby/Garnet flit-level mesh；
+- worst-case 或 tail-latency 理论保证；
+- 对真实 D2D PHY 的 cycle-accurate 复现。
 
-选择该方案的原因如下：
+## 2. 最终选择
 
-- 相比 M/G/1，它不再假设到达过程必然为独立泊松流，能够通过到达间隔方差显式反映 burstiness。
-- 相比完整 GGeo/maximum-entropy NoC 模型，它只需要前两阶统计量，适合 profiling-window 驱动的在线控制器。
-- 相比只读取当前队列状态，它能够预测尚未执行的候选 allocation。
-- 实测 queue feedback 可以补偿二阶矩无法描述的长程相关性、同步 burst、有限 buffer、仲裁和 backpressure。
-- 当到达流接近泊松过程时，模型自然退化为原来的 M/G/1，不会割裂原有算法思路。
+UACC 使用：
 
-该选择是本轮投稿的最终基线。只有实验表明 AXI transaction-start 的 $C_A^2$ 在所有关键配置下均接近 1，且 M/G/1 与实测队列延迟及 allocation oracle 一致时，才允许在论文中将模型降级为更简单的 M/G/1。
+> **G/G/1 moment approximation + measured queue feedback**
 
-## 2. 与 M/G/1 和 GGeo 的关系
+G/G/1 根据到达间隔和服务时间的前两阶矩预测候选 allocation 的平均排队延迟；实测 feedback 用于校准突发相关性、有限 buffer、仲裁和 backpressure 等解析模型未覆盖的影响。
 
-### 2.1 与 M/G/1 的关系
+该模型是原 M/G/1 的自然扩展。当到达过程接近 Poisson，即 $C_A^2=1$ 时，G/G/1 公式退化为 M/G/1。
 
-M/G/1 假设到达过程为 Poisson，服务时间服从一般分布。其平均排队等待时间为：
+模型只用于 allocation ranking 和 saturation avoidance，不声称精确预测任意突发流量的完整延迟分布。
 
-$$
-W_q^{M/G/1}
-=
-\frac{\lambda E[S^2]}
-     {2(1-\lambda E[S])}.
-$$
+## 3. 排队模型
 
-令
+### 3.1 建模对象
 
-$$
-\rho=\lambda E[S],
-\qquad
-C_S^2=\frac{\operatorname{Var}(S)}{E[S]^2},
-$$
+每个实际发生竞争的有向链路或共享端口对应一个 queueing domain。customer 是进入该队列的 gem5 timing packet。
 
-可写成：
+必须遵守：
 
-$$
-W_q^{M/G/1}
-=
-\frac{\rho}{1-\rho}
-\frac{1+C_S^2}{2}E[S].
-$$
+- 独立 `SerialLink` 使用各自的到达率和统计量；
+- 只有共享同一服务资源的流量才能合并为一个全局到达率；
+- 请求与响应方向若具有独立队列，必须分别建模；
+- 共享 `NoncoherentXBar` 的竞争不能错误地归入某个独立 `SerialLink`。
 
-UACC 的新模型采用 G/G/1 的 Kingman moment approximation：
+### 3.2 固定延迟与服务时间
+
+远端访问延迟分解为：
 
 $$
-W_q^{G/G/1}
+L_{remote}=L_{fixed}+S+W_q.
+$$
+
+其中：
+
+- $L_{fixed}$：传播、路由、cache lookup 等不持续占用瓶颈资源的延迟；
+- $S$：packet 占用服务资源的时间；
+- $W_q$：进入队列后等待获得服务的时间。
+
+RTT 属于固定延迟，不能作为服务时间。对 packet $n$：
+
+$$
+S_n=\frac{B_n}{BW},
+$$
+
+其中 $B_n$ 是该 packet 在 `SerialLink` 模型中的传输字节数，$BW$ 是 payload bandwidth。
+
+请求、数据响应、miss response 和 writeback 可以具有不同的 $B_n$，其差异通过一般服务时间分布 $G$ 表达。
+
+### 3.3 到达过程
+
+连续 packet 的入队时间为 $t_n$，到达间隔为：
+
+$$
+A_n=t_n-t_{n-1}.
+$$
+
+到达间隔平方变异系数为：
+
+$$
+C_A^2=\frac{\operatorname{Var}(A)}{E[A]^2}.
+$$
+
+- $C_A^2\approx1$：接近 Poisson；
+- $C_A^2>1$：存在 burstiness，M/G/1 可能低估排队延迟；
+- $C_A^2<1$：到达过程比 Poisson 更规则。
+
+少核、streaming、MSHR 批量完成和 dirty eviction 都可能导致 $C_A^2>1$。
+
+### 3.4 服务时间矩
+
+profiling window 内有 $N$ 个 packet：
+
+$$
+E[S]=\frac{1}{N}\sum_{n=1}^{N}S_n,
+$$
+
+$$
+E[S^2]=\frac{1}{N}\sum_{n=1}^{N}S_n^2,
+$$
+
+$$
+C_S^2=\frac{E[S^2]-E[S]^2}{E[S]^2}.
+$$
+
+服务时间只包含资源实际 busy 的时间，不包含 enqueue-to-service waiting time，避免重复计算拥塞。
+
+### 3.5 G/G/1 moment approximation
+
+设到达率为：
+
+$$
+\lambda=\frac{N}{T},
+$$
+
+利用率为：
+
+$$
+\rho=\lambda E[S].
+$$
+
+平均排队等待时间采用 Kingman approximation：
+
+$$
+W_q^{model}
 \approx
 \frac{\rho}{1-\rho}
 \frac{C_A^2+C_S^2}{2}E[S].
 $$
 
-其中 $C_A^2$ 是到达间隔的平方变异系数。当 $C_A^2=1$ 时，该式与 M/G/1 的 Pollaczek-Khinchine 结果一致。因此，新模型可以准确表述为原 M/G/1 predictor 的 **burst-aware extension**。
-
-### 2.2 与 GGeo 的关系
-
-G/G/1 是队列类别：一般到达过程、一般服务时间、一个服务台。GGeo 是一种具体的离散时间到达分布。因此，GGeo/G/1 是 G/G/1 的一个具体实例，而不是与 G/G/1 同一层次的概念。
-
-Mandal 等人在 ICCAD 2020 的工作使用 generalized geometric（GGeo）流量，以 $(\lambda,C_A)$ 表征每个流量类，并结合 maximum entropy、流量 merge/split、superposition、优先级和 deflection routing 推导 NoC 延迟。该模型适合离线分析复杂多级 NoC，但对于 UACC 的在线单瓶颈或少量瓶颈链路过重。
-
-UACC 借鉴其核心思想——使用 $(\lambda,C_A)$ 表征 burstiness——但不拟合完整 GGeo 分布，也不进行 maximum-entropy 网络分解。UACC 只使用到达与服务过程的前两阶矩，并以实测队列反馈校准模型误差。
-
-参考文献：
-
-- S. K. Mandal et al., “Performance Analysis of Priority-Aware NoCs with Deflection Routing under Traffic Congestion,” ICCAD 2020, DOI: 10.1145/3400302.3415654.
-- Open version: https://arxiv.org/abs/2008.03904
-
-### 2.3 AXI burst 在模型中的位置
-
-采用 AXI 协议后，必须区分两种 burst：
-
-1. 单个 AXI transaction 内的多 beat burst。若链路或 bridge 从获得 grant 到 `RLAST/WLAST` 保持服务权，则 burst length 属于服务时间分布 $G$。
-2. 多个独立 AXI transaction 在短时间内连续发出。该现象属于到达过程 $A$，不能通过增大服务时间吸收。
-
-因此，AXI 使可变 burst service time 的建模更明确，但不会自动证明 transaction-start arrivals 为 Poisson。审稿人对 M/G/1 中 $M$ 的质疑仍需通过 $C_A^2$ 和实际队列数据回答。
-
-本轮实验默认一个 AXI burst 是 D2D 数据通道上的非抢占服务单元。若实现允许在 beat/flit 边界交错不同 transaction，则 customer 必须改为实际仲裁单元，AXI burst length 转化为一组相关到达；该情况需要在实验配置和论文中单独说明。
-
-## 3. 建模边界与基本假设
-
-模型以每条 **有向 D2D 瓶颈链路** 为一个单服务台队列。请求方向与响应方向分别统计；若硬件明确共享同一物理带宽，则在同一服务台中合并对应流量。统计 customer 是瓶颈仲裁器实际调度的 AXI transaction，而不是抽象 CPU memory instruction。
-
-模型假设：
-
-- profiling window 内流量近似平稳；窗口之间允许通过 EWMA 跟踪相位变化。
-- 链路采用近似 work-conserving 的仲裁。
-- 首版假设 AXI burst 获得数据通道服务权后保持到 `RLAST/WLAST`；若实际 interconnect 不满足，按实际仲裁粒度重定义 customer。
-- 目标是估计平均排队代价和饱和风险，不预测严格的 worst-case 或 tail latency。
-- 有限 buffer、反压和未建模相关性由实测 feedback 与硬安全阈值处理。
-- 最终性能结果必须来自 trace-driven/cycle-accurate simulation，而不是只依赖解析公式。
-
-## 4. 延迟分解
-
-远端访问延迟分为：
+当 $C_A^2=1$ 时：
 
 $$
-L_{remote}
+W_q^{model}
 =
-L_{fixed}+L_{ser}+L_{queue}.
+\frac{\rho}{1-\rho}
+\frac{1+C_S^2}{2}E[S],
 $$
 
-其中：
+与 M/G/1 的 Pollaczek-Khinchine 结果一致。
 
-- $L_{fixed}$：D2D 传播、路由、远端 cache lookup 和其他不持续占用链路的固定延迟。
-- $L_{ser}$：AXI transaction 在 D2D 瓶颈上的序列化/占用时间。
-- $L_{queue}$：链路竞争导致的排队等待时间。
+## 4. Profiling-window 统计
 
-RTT 只能进入 $L_{fixed}$，不能作为队列服务时间。对于 AXI transaction 类型 $j$：
+每个 queueing domain 维护：
+
+```text
+arrival_count
+last_arrival_tick
+interarrival_mean
+interarrival_M2
+service_mean
+service_M2
+observed_wait_sum
+observed_wait_samples
+queue_occupancy_sum
+queue_occupancy_max
+buffer_full_events
+backpressure_events
+```
+
+方差使用 Welford 算法或等价的数值稳定方法计算。
+
+窗口间使用 EWMA：
 
 $$
-S_j=\frac{B_{header,j}+N_{beat,j}B_{beat,j}}{BW},
+\bar{x}_t=\alpha x_t+(1-\alpha)\bar{x}_{t-1}.
 $$
 
-其中 $N_{beat}=AxLEN+1$，$B_{beat}$ 由 `AxSIZE` 给出，$BW$ 是链路 payload bandwidth。若 bridge 在 transaction 获得 grant 后的空拍期间仍锁定链路，则锁定空拍属于服务时间；若其他 transaction 可利用该空拍，则不计入该 transaction 的服务时间。
+首轮默认参数：
 
-首版至少区分：
+```text
+profile_interval = 100000 cycles
+min_arrival_samples = 32
+moment_ewma_alpha = 0.2
+feedback_ewma_alpha = 0.2
+rho_max = 0.90
+feedback_beta_max = 4.0
+```
 
-| AXI/D2D 事务类型 | 符号 | 建议建模方式 |
-|---|---:|---:|
-| AR/AW remote lookup | req | 单 beat 地址/控制事务 |
-| R cache-line response | data | 由 `ARLEN`、`ARSIZE` 决定的 burst |
-| B 或 remote-miss response | miss | 单 beat 状态事务 |
-| W dirty writeback | wb | 由 `AWLEN`、`AWSIZE` 决定的 burst |
+样本不足时沿用上一窗口结果。启动时设置 $C_A^2=1$、feedback factor 为 1。
 
-实际默认值应由 AXI data width、`AxLEN/AxSIZE` 或 D2D bridge packetization 参数给出，不能将所有事务统一视为一个 full-cache-line response。AR/AW、R、W、B 若最终共享一个物理 serializer，则作为同一服务台中的不同服务类别；若为独立通道，则分别建模。
+为避免低估突发风险，默认使用：
 
-## 5. 流量模型
+$$
+C_{A,eff}^2=\max(1,\operatorname{EWMA}(C_A^2)).
+$$
 
-设核心 $i$ 在 profiling window $T$ 内产生 $N_{miss,i}$ 次符合条件的本地 cache miss：
+是否允许 $C_A^2<1$ 降低拥塞预测作为敏感性实验评估。
+
+## 5. Measured queue feedback
+
+实际平均等待时间为：
+
+$$
+W_q^{obs}
+=
+\frac{1}{N}\sum_{n=1}^{N}
+(t_{service,n}-t_{arrival,n}).
+$$
+
+定义校准因子：
+
+$$
+\beta
+=
+\operatorname{clip}
+\left(
+\frac{W_q^{obs}}
+     {\max(W_q^{model,current},\epsilon)},
+1,\beta_{max}
+\right).
+$$
+
+对 $\beta$ 使用 EWMA。候选 allocation 的预测为：
+
+$$
+\widehat W_q(\mathbf{k}')
+=
+\bar{\beta}W_q^{model}(\mathbf{k}').
+$$
+
+实测等待时间只反映当前 allocation，不能直接替代候选预测；$\beta$ 用于校准解析模型的系统性低估。
+
+满足以下任一条件时拒绝扩容候选：
+
+- 任一相关 queueing domain 的 $\rho(\mathbf{k}')\geq\rho_{max}$；
+- queue occupancy 超过标定阈值；
+- buffer-full 或 backpressure events 超过标定阈值；
+- 模型输入无效或发生数值溢出。
+
+若实际拥塞持续多个窗口，allocator 应允许收缩 allocation。
+
+## 6. 候选 allocation 成本
+
+### 6.1 ATD 容量收益
+
+设核心 $i$ 的本地 miss rate 为：
 
 $$
 m_i=\frac{N_{miss,i}}{T}.
 $$
 
-ATD 在分配 $k_i$ 个远端 way 时预测远端命中概率：
+ATD 预测分配 $k_i$ 个远端 way 时的远端命中概率：
 
 $$
 p_i(k_i)
@@ -158,224 +256,7 @@ p_i(k_i)
 }{N_{miss,i}}.
 $$
 
-对顺序 local miss → remote lookup 的首版实现，下式表示 AXI/D2D transaction 到达率，而不是 flit 到达率：
-
-$$
-\lambda_{i,req}(k_i)
-=
-m_i\mathbf{1}[k_i>0],
-$$
-
-$$
-\lambda_{i,data}(k_i)
-=
-m_i p_i(k_i),
-$$
-
-$$
-\lambda_{i,miss}(k_i)
-=
-m_i(1-p_i(k_i))\mathbf{1}[k_i>0].
-$$
-
-dirty writeback transaction rate $\lambda_{i,wb}$ 应优先从实际统计获得。对应 W burst 的服务时间由实际 burst length 决定。若候选 allocation 会引发容量回收，则应将预计回收 writeback 作为短期附加流量或由反馈安全阀处理。
-
-从 0 way 增加到 1 way 会为所有符合条件的本地 miss 启用 remote lookup，因此存在 activation cost；从 1 way 增加到更多 way 时，lookup request rate 通常不再按相同比例增加。候选模型必须保留这一不连续性。
-
-## 6. 服务时间矩
-
-对链路 $\ell$，令第 $j$ 类 AXI transaction 到达率为 $\lambda_{\ell,j}$，总 transaction 到达率为：
-
-$$
-\Lambda_\ell=\sum_j\lambda_{\ell,j}.
-$$
-
-服务时间的一阶矩为：
-
-$$
-E[S_\ell]
-=
-\frac{\sum_j\lambda_{\ell,j}S_{\ell,j}}
-     {\Lambda_\ell}.
-$$
-
-二阶矩为：
-
-$$
-E[S_\ell^2]
-=
-\frac{\sum_j\lambda_{\ell,j}S_{\ell,j}^2}
-     {\Lambda_\ell}.
-$$
-
-服务时间平方变异系数为：
-
-$$
-C_{S,\ell}^2
-=
-\frac{E[S_\ell^2]-E[S_\ell]^2}
-     {E[S_\ell]^2}.
-$$
-
-链路利用率直接计算为：
-
-$$
-\rho_\ell
-=
-\sum_j\lambda_{\ell,j}S_{\ell,j}
-=
-\Lambda_\ell E[S_\ell].
-$$
-
-## 7. 在线 burstiness 统计
-
-对每条有向瓶颈链路，记录连续 AXI transaction 到达被建模队列的间隔：
-
-$$
-A_n=t_n-t_{n-1}.
-$$
-
-每个 profiling window 维护：
-
-```text
-arrival_count
-last_arrival_tick
-sum_interarrival
-sum_interarrival_squared
-```
-
-窗口结束时计算：
-
-$$
-E[A]=\frac{\sum_n A_n}{N},
-$$
-
-$$
-\operatorname{Var}(A)
-=
-\max\left(0,\frac{\sum_n A_n^2}{N}-E[A]^2\right),
-$$
-
-$$
-C_A^2
-=
-\frac{\operatorname{Var}(A)}{E[A]^2}.
-$$
-
-对低样本窗口：
-
-- 若有效间隔数少于可配置阈值 `min_arrival_samples`，沿用上一窗口的 EWMA 值。
-- 系统启动时默认 $C_A^2=1$。
-- 使用数值稳定的 Welford 算法或等价方法维护方差。
-
-窗口间使用 EWMA：
-
-$$
-\overline C_{A,t}^2
-=
-\alpha C_{A,t}^2
-+(1-\alpha)\overline C_{A,t-1}^2.
-$$
-
-为避免低估突发拥塞，默认使用：
-
-$$
-C_{A,eff}^2=\max(1,\overline C_A^2).
-$$
-
-该保守下界应作为可配置选项，以便实验比较是否允许 sub-Poisson traffic 获得较低预测延迟。
-
-## 8. G/G/1 moment predictor
-
-每条链路的基础预测为：
-
-$$
-W_{q,\ell}^{model}
-=
-\frac{\rho_\ell}{1-\rho_\ell}
-\frac{C_{A,eff,\ell}^2+C_{S,\ell}^2}{2}
-E[S_\ell].
-$$
-
-当 $\rho_\ell\leq0$ 时返回 0。当 $\rho_\ell$ 达到硬阈值时，不继续计算一个有限但巨大的 utility penalty，而是直接判定候选不可接受。
-
-Kingman 公式本质上是平均等待时间近似。它不能完整捕捉长程相关性、同步 memory phases、MSHR 批量释放或有限 buffer 的离散反压，因此必须结合下一节的实测校准。
-
-## 9. Measured queue feedback
-
-### 9.1 实测量
-
-链路或其相邻队列每个窗口至少统计 AXI transaction 级信息：
-
-```text
-observed_queue_delay_sum
-observed_queue_delay_samples
-average_queue_occupancy
-maximum_queue_occupancy
-buffer_full_events
-retry_or_backpressure_events
-```
-
-实测平均等待时间为：
-
-$$
-W_q^{obs}
-=
-\frac{\sum_n(t_{service,n}-t_{arrival,n})}{N}.
-$$
-
-### 9.2 校准因子
-
-当前流量下计算模型值 $W_q^{model,current}$，定义：
-
-$$
-\beta_t
-=
-\operatorname{clip}
-\left(
-\frac{W_{q,t}^{obs}}
-     {\max(W_{q,t}^{model,current},\epsilon)},
-1,\beta_{max}
-\right).
-$$
-
-对 $\beta$ 使用 EWMA，并建议默认：
-
-```text
-beta_initial = 1.0
-beta_max = 4.0
-feedback_ewma_alpha = 0.2
-```
-
-候选 allocation 使用：
-
-$$
-\widehat W_{q,\ell}(\mathbf{k}')
-=
-\overline\beta_\ell
-W_{q,\ell}^{model}(\mathbf{k}').
-$$
-
-实测值反映当前 allocation，不能直接作为候选 allocation 的等待时间；校准因子负责将当前模型误差外推到候选预测。
-
-### 9.3 硬安全阈值
-
-满足以下任一条件时拒绝扩容候选：
-
-- $\rho_\ell(\mathbf{k}')\geq\rho_{max}$，建议初始值为 0.90。
-- 当前平均或最大 queue occupancy 超过配置阈值。
-- `buffer_full_events` 或 `retry_or_backpressure_events` 超过阈值。
-- 预测量出现 NaN、无穷值或无有效统计样本且链路已经处于高利用率。
-
-持续多个窗口超过反馈阈值时，控制器应允许收缩 allocation，而不仅是停止继续扩容。
-
-## 10. 候选 allocation 的统一成本模型
-
-所有收益与代价统一为 cycles/s，避免原公式中 miss-rate reduction 与 queueing time 直接相减的量纲错误。
-
-### 10.1 容量收益
-
-候选 $k_i\rightarrow k_i+\Delta$ 带来的新增远端命中率：
+候选 $k_i\rightarrow k_i+\Delta$ 的新增远端命中率为：
 
 $$
 \Delta h_i
@@ -383,48 +264,55 @@ $$
 m_i[p_i(k_i+\Delta)-p_i(k_i)].
 $$
 
-若避免一次下层访问节省 $L_{lower,i}$ 个 CPU cycles：
+若避免一次 lower-level miss 节省 $L_{lower,i}$ cycles：
 
 $$
-G_i
+G_i=\Delta h_iL_{lower,i}.
+$$
+
+$G_i$ 的单位为 cycles/s。
+
+### 6.2 候选流量
+
+候选 allocation 根据 ATD 预测的 remote lookup、hit、miss 和 writeback 变化，生成每个 queueing domain 的候选 packet rates：
+
+$$
+\lambda'_{\ell,j}
 =
-\Delta h_iL_{lower,i}.
+\lambda_{\ell,j}+\Delta\lambda_{\ell,j}.
 $$
 
-$G_i$ 的单位为 cycles/s。距离影响应进入真实的固定远端延迟，或作为经过实验标定的收益折扣；不应与排队模型重复计算同一延迟。
+其中 $\ell$ 表示 queueing domain，$j$ 表示 packet class。
 
-### 10.2 固定远端成本
+从 0 way 增加到 1 way 时，所有符合条件的本地 miss 都可能开始产生 remote lookup，因此必须单独计入 activation cost。后续增加 way 主要改变 remote hit/miss response 比例。
 
-定义 allocation vector $\mathbf{k}$ 下的固定通信成本：
+### 6.3 固定成本与排队外部性
+
+固定通信成本为：
 
 $$
 C_{fixed}(\mathbf{k})
 =
 \sum_{\ell,j}
-\lambda_{\ell,j}(\mathbf{k})
-L_{fixed,\ell,j}.
+\lambda_{\ell,j}(\mathbf{k})L_{fixed,\ell,j}.
 $$
 
-候选增量为：
-
-$$
-\Delta C_{fixed}
-=
-C_{fixed}(\mathbf{k}')-C_{fixed}(\mathbf{k}).
-$$
-
-### 10.3 总排队外部性
-
-单条链路的总排队成本为：
+queueing domain $\ell$ 的总排队成本为：
 
 $$
 C_{q,\ell}(\mathbf{k})
 =
 f_{cpu}\Lambda_\ell(\mathbf{k})
-\widehat W_{q,\ell}(\mathbf{k}).
+\widehat W_{q,\ell}(\mathbf{k}),
 $$
 
-整个系统的候选增量为：
+其中：
+
+$$
+\Lambda_\ell=\sum_j\lambda_{\ell,j}.
+$$
+
+候选的拥塞外部性为：
 
 $$
 \Delta C_q
@@ -435,477 +323,588 @@ C_{q,\ell}(\mathbf{k}')-C_{q,\ell}(\mathbf{k})
 \right].
 $$
 
-使用 $\Lambda W_q$ 而不是只使用 $W_q(\lambda+\Delta\lambda)-W_q(\lambda)$，从而计入新增流量对所有既有请求造成的拥塞外部性。
+使用 $\Lambda W_q$ 的总成本差，才能计入新增流量对既有请求造成的延迟，而不是只计算单个请求的等待时间差。
 
-### 10.4 最终边际效用
+### 6.4 最终效用
 
 $$
 MU_i(\Delta)
 =
-G_i-\Delta C_{fixed}-\Delta C_q.
+G_i
+-[C_{fixed}(\mathbf{k}')-C_{fixed}(\mathbf{k})]
+-\Delta C_q.
 $$
 
-只有 $MU_i(\Delta)>0$ 且所有链路均通过硬安全检查时，候选才可接受。
+所有项统一为 cycles/s。只有 $MU_i(\Delta)>0$ 且通过所有拥塞 guard 时，候选才可接受。
 
-若算法评估多 way lookahead $\Delta>1$ 但每次只提交一个 way，候选排序默认使用：
+若评估 $\Delta>1$ 但每次只提交一个 way，候选排序使用：
 
 $$
-Score_i(\Delta)=\frac{MU_i(\Delta)}{\Delta},
+Score_i(\Delta)=\frac{MU_i(\Delta)}{\Delta}.
 $$
 
-避免较大的 $\Delta$ 仅因累计收益更多而天然占优。若实验需要跨越短期零收益位置，可同时记录 cumulative utility 和 per-way score，并通过消融实验说明选择。
-
-## 11. 分配器伪代码
+## 7. 分配算法
 
 ```text
-measure per-core miss rate m_i
-estimate p_i(k) from ATD
-update per-link lambda, C_A^2, C_S^2 and feedback beta
+collect ATD and per-domain queue statistics
+update lambda, CA2, CS2 and feedback beta
 
-initialize allocation vector k
+initialize candidate allocation vector k
 
-while total allocated ways < max_remote_ways:
-    best = none
+while remote ways remain:
+    best_candidate = none
 
     for each core i:
         for each lookahead delta:
-            candidate = k
-            candidate[i] += delta
+            predict candidate packet rates
 
-            derive request/data/miss/writeback rates for candidate
-
-            if any candidate link violates utilization or feedback guard:
+            if utilization or measured-congestion guard fails:
                 reject candidate
                 continue
 
-            gain = added_remote_hit_rate * lower_miss_penalty
-            fixed_delta = FixedCost(candidate) - FixedCost(k)
-            queue_delta = QueueCost(candidate) - QueueCost(k)
-            utility = gain - fixed_delta - queue_delta
-            score = utility / delta
+            compute capacity gain
+            compute fixed-cost difference
+            compute total queue-cost difference
+            compute utility and per-way score
 
-            retain candidate with highest positive score
+            retain highest positive score
 
     if no positive candidate exists:
         break
 
     commit one way to the selected core
-    update predicted link traffic and repeat
+    update predicted traffic
 
 apply allocation
 
-if measured congestion remains above contraction threshold
-for multiple windows:
-    remove the remote way with the smallest retained benefit
+if measured congestion remains high for multiple windows:
+    contract the lowest-benefit allocation
 ```
 
-## 12. gem5 实现要求
+## 8. gem5 修改要求
 
-### 12.1 建议新增参数
+### 8.1 `SerialLink` 或等价队列
+
+需要暴露或记录：
+
+- packet enqueue tick；
+- service-start tick；
+- service busy time；
+- queue occupancy；
+- buffer-full 和 retry/backpressure events。
+
+观测必须位于真实排队点。只在 `UACCController` 接收到逻辑访问事件时记录，无法得到真实等待时间。
+
+### 8.2 `UACCController`
+
+每个 queueing domain 保存：
 
 ```text
-axi_data_width_bytes
-axi_address_bytes
-axi_response_bytes
-axi_max_burst_beats
-axi_burst_holds_grant
-request_default_beats
-data_response_default_beats
-writeback_default_beats
-rho_max
+lambda
+CA2_raw / CA2_ewma
+ES / ES2 / CS2
+rho
+Wq_model / Wq_observed
+feedback_beta
+queue occupancy and backpressure counters
+```
+
+新增建议参数：
+
+```text
 min_arrival_samples
-arrival_ewma_alpha
+moment_ewma_alpha
 feedback_ewma_alpha
 feedback_beta_max
+rho_max
 queue_occupancy_threshold
 backpressure_threshold
 contraction_windows
 ```
 
-`response_flits` 应由明确的 AXI/D2D data width、burst beats 和 bridge framing 参数取代，或仅作为配置层兼容参数。实验配置必须输出最终使用的 transaction service-time mapping，保证论文表格中的带宽、beat width 和 burst length 可以复现。
+### 8.3 拓扑一致性
 
-### 12.2 建议新增统计
+`plan.md` 当前为每核一个 `SerialLink`，因此不能将所有核心流量直接合并后套用单条链路的服务时间。
 
-```text
-arrivalSCV
-serviceSCV
-transactionArrivalRate
-meanTransactionServiceTime
-secondMomentTransactionServiceTime
-linkUtilization
-modelQueueDelay
-observedQueueDelay
-feedbackBeta
-averageQueueOccupancy
-maximumQueueOccupancy
-bufferFullEvents
-backpressureEvents
-rejectedByUtilization
-rejectedByFeedback
-allocationContractions
-```
+首版采用：
 
-建议将统计按有向链路和 AXI channel/transaction class 分组，同时提供合并后的瓶颈统计。每个 profiling window 至少输出一次 compact trace，字段为：
+- 每核 `SerialLink`：独立统计和预测；
+- 共享 `UACCXBar`：使用实测 occupancy/backpressure 表示共享竞争；
+- 若后续改为共享 D2D link，再将通过该 link 的流量合并为一个 queueing domain。
 
-```text
-window_id
-link_id
-transaction_count
-lambda
-CA2_raw
-CA2_ewma
-ES
-ES2
-CS2
-rho
-Wq_model
-Wq_observed
-beta
-queue_occupancy_avg
-queue_occupancy_max
-buffer_full_events
-backpressure_events
-allocation_vector
-```
+解析模型与模拟拓扑必须使用相同的共享关系。
 
-### 12.3 当前拓扑一致性
+## 9. 验证方案
 
-当前配置为每核创建独立 `SerialLink`，而控制器将所有核心流量合并为一个全局 $\lambda$。两种建模语义不一致，必须选择其一：
+### 9.1 单元测试
 
-1. 若论文假设共享 D2D 瓶颈，应将拓扑改为共享 host-side arbiter/queue 和共享 D2D link，然后使用全局或共享链路统计。
-2. 若保留每核独立 D2D link，应为每条 link 单独维护 $\lambda$、$C_A^2$、$C_S^2$、$\beta$ 和 queue cost；UACC 侧共享 xbar 的竞争另行统计。
+- $C_A^2=1$ 时 G/G/1 与 M/G/1 一致；
+- 固定服务时间时 $C_S^2=0$；
+- $W_q$ 随 $C_A^2$、$C_S^2$ 和 $\rho$ 单调增加；
+- $\rho\geq\rho_{max}$ 时拒绝候选；
+- $\beta$ 保持在 $[1,\beta_{max}]$；
+- 多 packet size 的 $E[S]$、$E[S^2]$ 和 $C_S^2$ 正确；
+- 总 queue cost 包含对既有流量的外部性；
+- 样本不足、零等待和数值溢出路径正确。
 
-对于论文中的 congestion-aware multi-core UACC，推荐第一种共享瓶颈拓扑，后续再扩展为每条有向 2D mesh link 的独立模型。
+### 9.2 合成流量
 
-### 12.4 观测点
+至少覆盖：
 
-到达时间应在 AXI transaction 真正进入被建模瓶颈队列时记录，服务开始时间应在 transaction 获得链路发送资格时记录，服务结束时间应在该仲裁单元完成时记录。若一个 burst 被锁定到 `RLAST/WLAST`，结束点为最后一个 beat；若允许 beat/flit 级交错，customer 与观测点必须改为实际仲裁单元。若只在 controller 收到逻辑访问事件时记录，会遗漏下游仲裁和 backpressure。
-
-首选方案是在 `SerialLink` 或专用共享 D2D queue 中暴露轻量 observer/callback；次选方案是在 UACC D2D wrapper 中记录 enqueue、dequeue 和 retry 事件。
-
-### 12.5 gem5 classic 到 AXI transaction 的映射
-
-gem5 classic memory system 内部传递的是 `Packet`，当前 `SerialLink` 根据 `pkt->getSize()` 计算序列化周期，并不原生建模 AXI 的 AR/AW/R/W/B channel、`AxLEN/AxSIZE`、ID 或 `LAST`。因此，在完成映射层之前，实验只能声称是 **AXI-like transaction abstraction**，不能声称执行了完整 AXI protocol simulation。
-
-当前实现还存在一个具体风险：read request 的 `Packet` size 表示访问的数据范围，不一定等于物理 AR channel 上的地址/控制字节数。直接对所有 request 和 response 使用 `pkt->getSize()`，可能把一个 AR request 错误地按整条 cache line 收取序列化时间。
-
-实验前必须实现或明确以下映射：
-
-| gem5 command/direction | AXI-like transaction | 链路服务字节数 |
-|---|---|---:|
-| `ReadReq` | AR | `axi_address_bytes` |
-| successful read response | R burst | response payload bytes + framing |
-| write/writeback request | AW + W burst | address/control 与 data 分别计费，或明确采用合并近似 |
-| write acknowledgement | B | `axi_response_bytes` |
-| remote miss/status response | B-like/control | `axi_response_bytes` |
-
-推荐增加 `transferBytes(pkt, direction, phase)` 或等价 adapter，由它统一决定实际 serializer service time，不能继续让所有路径直接使用 `pkt->getSize()`。若为了首版简化而将 AW+W 合并成一个不可抢占 transaction，论文和配置必须明确该近似，并通过敏感性实验比较独立 channel 与合并 channel 的差异。
-
-若没有实现完整 AXI channel timing，论文推荐使用以下措辞：
-
-> We model an AXI-like transaction interface at the D2D bottleneck, including separate control and payload transfer sizes and configurable burst lengths; detailed AXI channel handshaking is abstracted by the timing-link queue.
-
-不应使用：
-
-> Our simulator implements a cycle-accurate AXI4 interconnect.
-
-## 13. 验证计划
-
-### 13.1 数学与单元测试
-
-- $C_A^2=1$ 时 G/G/1 结果与 M/G/1 一致。
-- 固定服务时间时 $C_S^2=0$，结果退化为 M/D/1 对应形式。
-- 固定 $\lambda$ 时，$W_q$ 随 $C_A^2$、$C_S^2$ 和 $\rho$ 单调增加。
-- $\rho\rightarrow1$ 时候选被硬阈值拒绝。
-- $\beta\geq1$，并正确受到 `feedback_beta_max` 限制。
-- 多种 AXI transaction/burst length 的 $E[S]$、$E[S^2]$ 和 $C_S^2$ 计算正确。
-- 总 queue cost 包含既有流量的 congestion externality。
-
-### 13.2 合成流量
-
-至少测试：
-
-- Poisson/geometric arrivals，验证 $C_A^2\approx1$。
-- deterministic arrivals，验证低 burstiness 行为。
-- on/off burst traffic。
-- 连续 cache-line streaming。
-- 多核同步 memory phase。
-- MSHR completion burst。
+- Poisson/geometric arrivals；
+- deterministic arrivals；
+- on/off burst traffic；
+- sequential cache-line streaming；
+- 多核同步 memory phase；
+- MSHR completion burst；
 - dirty writeback burst。
 
-逐步扫描：
+扫描：
 
 ```text
-arrival rate
-burst length
-on/off duration
-AXI burst-length and channel mixture
+arrival rate / utilization
+burst length and on/off duration
+packet-size mixture
 D2D bandwidth
 buffer depth
 core count
 ```
 
-### 13.3 模型准确性
+### 9.3 对比策略
 
-比较：
+```text
+distance-only
+original RTT-based M/G/1
+serialization-based M/G/1
+G/G/1 moments
+G/G/1 moments + feedback
+direct queue-cost
+direct queue-cost + feedback
+measured-delay oracle
+```
 
-1. 原 RTT-based M/G/1。
-2. 修正 serialization-based M/G/1。
-3. G/G/1 moment approximation。
-4. G/G/1 + measured queue feedback。
-5. simulator-measured queue-delay oracle。
+### 9.4 报告指标
 
-报告：
+- $C_A^2$、$C_S^2$ 和利用率分布；
+- mean/median prediction error；
+- P95 和最大 underestimation；
+- allocation decision agreement with oracle；
+- buffer-full/retry/backpressure events；
+- IPC/speedup；
+- 相对 monolithic baseline 是否发生 regression；
+- 状态存储和每窗口计算开销。
 
-- 平均和中位相对误差。
-- 最大及 P95 低估误差。
-- P95/P99 误差作为补充，不将 moment model 宣称为 tail predictor。
-- allocation decision agreement with oracle。
-- buffer-full/retry/backpressure 次数。
-- 系统性能和是否出现低于 monolithic baseline 的退化。
-
-对真实等待时间 $W_q^{obs}>0$ 的窗口，定义 signed relative error：
+对 $W_q^{obs}>0$ 的窗口：
 
 $$
 e_t=\frac{W_{q,t}^{pred}-W_{q,t}^{obs}}
-          {W_{q,t}^{obs}}.
+          {W_{q,t}^{obs}},
 $$
-
-其中 $e_t<0$ 表示低估。单独报告 underestimation magnitude：
 
 $$
 u_t=\max(0,-e_t).
 $$
 
-低流量且 $W_q^{obs}$ 接近 0 的窗口应同时报告绝对 cycle error，避免相对误差失真。所有误差结果按利用率区间分桶：
+$u_t$ 表示低估程度。低等待时间窗口同时报告绝对 cycle error。
 
-```text
-[0.0, 0.3)
-[0.3, 0.6)
-[0.6, 0.8)
-[0.8, rho_max)
-```
+### 9.5 实验顺序
 
-### 13.4 消融实验
+1. 单链路/单队列校准统计和公式；
+2. 多核 burst、MSHR 和 writeback 压力测试；
+3. 真实 workload 与 LP/BP/HP mixes；
+4. profiling window、EWMA、$\rho_{max}$ 和 $\beta_{max}$ 敏感性；
+5. 模型、feedback 和 oracle 消融对比。
 
-建议包含：
+实验启动前必须先解决拓扑统计归属和真实排队观测点，否则后续结果没有解释力。
 
-```text
-distance-only
-M/G/1
-G/G/1 moments
-G/G/1 moments + feedback
-measured-delay oracle
-```
+## 10. 投稿前判断标准
 
-重点证明 feedback 不是只改善预测数值，而是减少错误 allocation、链路饱和和 baseline regression。
+新模型应至少证明：
 
-### 13.5 分阶段实验矩阵
+- 在 burst 和高利用率窗口中，G/G/1+feedback 的低估显著小于 M/G/1；
+- allocation 决策更接近 measured-delay oracle；
+- buffer-full/backpressure 和错误扩容减少；
+- 最终性能不会因模型低估持续跌破 monolithic baseline；
+- 新增状态和计算开销与在线 allocator 的定位相符。
 
-为避免直接运行过大的全组合，实验按三阶段推进。
+若 G/G/1 只改善公式误差，却不改善 allocation、拥塞或性能，则不能将其作为主要贡献。若真实流量的 $C_A^2$ 普遍接近 1，应如实报告 M/G/1 在这些配置下经验上有效，并将 G/G/1+feedback 定位为针对少核和突发阶段的鲁棒扩展。
 
-#### 阶段 A：单链路模型校准
-
-固定 cache 行为，只验证 AXI/D2D queue：
-
-```text
-arrival process: Poisson, deterministic, on/off, batch release
-target CA2: approximately 1, 2, 4, 8
-AXI burst beats: 1, 4, 8, 16
-utilization rho: 0.1 to 0.9
-buffer depth: low, nominal, high
-```
-
-输出 M/G/1、G/G/1、G/G/1+feedback 和 oracle 的预测曲线。该阶段必须先确认观测点、单位、service boundary 和 $C_A^2/C_S^2$ 统计正确，之后才能进行系统性能实验。
-
-#### 阶段 B：多核定向压力测试
-
-```text
-core count: 4, 16, 32, 64
-traffic: streaming, synchronized phase, MSHR release, writeback burst
-D2D tier: weakest, nominal, strongest
-allocation policy: distance-only, M/G/1, G/G/1, G/G/1+feedback, oracle
-```
-
-重点观察少核条件下 $C_A^2$ 是否偏离 1，以及核数增加后聚合流量是否更接近 Poisson。不能预设“核数越多必然越 Poisson”，必须用数据验证。
-
-#### 阶段 C：真实 workload 与最终性能
-
-使用论文确定的 SPEC CPU2017 workload groups 和 LP/BP/HP mixes，保持相同 warmup、measurement region、cache budget 和 D2D tier。除性能外，保存每个窗口的 $C_A^2$、$C_S^2$、$\beta$、利用率、实测等待时间和 allocation vector。
-
-### 13.6 投稿前成功标准
-
-以下是本轮实验的预注册目标，而不是对模型精确性的理论保证：
-
-- G/G/1+feedback 在高利用率窗口的 P95 underestimation 明显低于裸 M/G/1，并给出统计结果而非只展示个别曲线。
-- G/G/1+feedback 的 allocation decision agreement with measured-delay oracle 目标不低于 90%。
-- 相对 oracle 的最终性能差距目标控制在 2% 以内；若未达到，必须分析是 moment extrapolation、feedback lag 还是 ATD 误差导致。
-- 在 burst stress tests 中，不出现由错误扩容造成的持续 buffer saturation 或明显 baseline regression。
-- 相比 distance-only 和 M/G/1，新增模型必须降低 buffer-full/backpressure events；如果只改善预测误差但不改善 allocation 或性能，不应将其作为主要贡献。
-- 报告窗口大小、EWMA $\alpha$、$\rho_{max}$ 和 $\beta_{max}$ 的敏感性，证明结论不依赖单一调参点。
-- 报告硬件状态位数、每 transaction 更新操作和每 profiling window 计算次数。
-
-若上述目标没有达到，不允许仅通过修改阈值隐藏结果。应依次检查：customer/服务边界是否定义错误、共享链路拓扑是否与全局 $\lambda$ 一致、反馈是否滞后、候选流量外推是否遗漏 writeback，最后再决定是否需要 GGeo/MMPP 等更复杂模型。
-
-### 13.7 第一轮实验默认值
-
-第一轮功能验证使用以下统一起点，后续必须做敏感性分析：
-
-```text
-profiling_window_cycles = 100000
-min_arrival_samples = 32
-arrival_ewma_alpha = 0.2
-feedback_ewma_alpha = 0.2
-feedback_beta_initial = 1.0
-feedback_beta_max = 4.0
-rho_max = 0.90
-CA2_initial = 1.0
-CA2_conservative_floor = 1.0
-```
-
-建议敏感性点：
-
-```text
-profiling_window_cycles: 25000, 100000, 400000
-EWMA alpha: 0.1, 0.2, 0.5
-rho_max: 0.85, 0.90, 0.95
-feedback_beta_max: 2, 4, 8
-```
-
-queue occupancy、buffer-full 和 backpressure 的拒绝阈值应先由阶段 A 的 buffer-depth sweep 标定，不能在看到最终 workload 性能后反向选择。阈值选定过程和最终值需写入实验日志。
-
-## 14. 论文表述建议
+## 11. 论文表述
 
 推荐表述：
 
-> UACC employs a lightweight AXI-transaction-level G/G/1 moment approximation to estimate the congestion impact of candidate capacity allocations. The predictor characterizes each directed D2D bottleneck using the aggregate transaction arrival rate, the squared coefficient of variation of transaction inter-arrival times, and the first two moments of AXI burst service time. Since second-order statistics cannot fully capture temporally correlated transaction bursts, finite buffering, and backpressure, UACC calibrates the analytical estimate using measured queueing delay and enforces utilization and queue-occupancy guardrails. The model is used to rank allocation candidates and avoid saturation, rather than as an exact predictor of the complete latency distribution.
+> UACC uses a lightweight G/G/1 moment approximation to estimate the congestion impact of candidate capacity allocations. The predictor measures the aggregate packet arrival rate, inter-arrival-time variation, and service-time moments at each modeled D2D queue. Since second-order statistics cannot fully capture temporally correlated bursts, finite buffering, and backpressure, UACC calibrates the estimate using measured queueing delay and applies utilization and queue-occupancy guardrails. The model is used for allocation ranking and saturation avoidance rather than exact latency-distribution prediction.
 
-与 Mandal 等人关系的推荐表述：
+与 GGeo 工作的关系：
 
-> Prior burst-aware NoC models characterize generalized-geometric traffic using its arrival rate and inter-arrival-time variation and propagate these statistics through complex priority and deflection networks. UACC adopts the same first-two-moment characterization of burstiness, but uses a lightweight G/G/1 approximation and runtime calibration because its predictor executes online and targets D2D bottleneck allocation rather than offline reconstruction of an entire NoC queueing network.
+> Prior burst-aware NoC models use generalized-geometric traffic and maximum-entropy decomposition to propagate burst statistics through complex priority and deflection networks. UACC adopts the lightweight first-two-moment characterization of burstiness, but does not reconstruct a complete NoC queueing network because its predictor executes online and targets a small number of D2D bottlenecks.
 
-需要避免的表述：
+需要避免：
 
-- “G/G/1 accurately models arbitrary bursty traffic.”
-- “The analytical model captures all temporal correlations.”
+- “G/G/1 accurately models arbitrary correlated traffic.”
+- “The predictor captures all temporal correlations.”
 - “RTT is the link service time.”
-- “The predictor replaces cycle-accurate congestion simulation.”
+- “The analytical model replaces timing simulation.”
 - “Mandal et al. use a standard G/G/1 model.”
 
-## 15. 审稿回复核心观点
+## 12. 审稿意见回应要点
 
-对 Poisson 假设和低估 burst delay 的质疑，回复应包含：
+针对 Poisson 假设可能低估 burst delay 的质疑：
 
-1. 承认裸 M/G/1 在 $C_A^2>1$ 时可能低估等待时间。
-2. 说明修订后通过实测 $C_A^2$ 使用 G/G/1 moment approximation。
-3. 说明 $C_A^2=1$ 时退化为原 M/G/1，因此属于自然扩展。
-4. 说明强时间相关性通过 measured queue delay、occupancy 和 backpressure feedback 补偿。
-5. 强调真实 simulation 仍执行原始 trace 和有限 buffer，不会将实际流量强制转换为独立到达流。
-6. 提供 burst synthetic traffic、真实 workload 和 measured-delay oracle 的验证结果。
+1. 承认裸 M/G/1 在 $C_A^2>1$ 时可能低估排队延迟；
+2. 使用实测 inter-arrival moments，而不是固定 Poisson 假设；
+3. 说明 $C_A^2=1$ 时新模型退化为原 M/G/1；
+4. 使用实际 queue delay、occupancy 和 backpressure 校准未建模相关性；
+5. 在真实 trace、有限 buffer 和 synthetic burst 下验证 underestimation；
+6. 与 measured-delay oracle 比较 allocation 和性能，而不仅比较公式误差。
 
-下一次投稿不能只声称“采用更一般的 G/G/1”。正文或补充材料应至少给出以下证据链：
+这套证据能够直接回应原审稿意见，但不能保证审稿人不提出新的模型范围、反馈滞后或实现开销问题，因此实验必须同时报告敏感性和开销。
 
-```text
-真实 AXI transaction trace
-  -> measured CA2 shows whether Poisson is valid
-  -> G/G/1 reduces burst-related underestimation
-  -> queue feedback covers residual correlation/backpressure error
-  -> allocation decisions approach measured-delay oracle
-  -> performance avoids D2D saturation and baseline regression
-```
+## 13. 实施顺序
 
-若真实 workload 的 $C_A^2$ 大多接近 1，也应如实报告。此时论文结论应是 M/G/1 在这些 workload 下经验上可用，而 G/G/1+feedback 为少核、同步访问和 eviction burst 提供鲁棒性，不能人为筛选只支持 burst-aware 模型的窗口。
+### P0：修正原模型
 
-## 16. 实施优先级
+- RTT 与服务时间分离；
+- 服务时间改为实际 serialization/busy time；
+- 统一 rate、time 和 utility 单位；
+- 按真实共享资源拆分 queueing domain；
+- 使用总 queue-cost difference。
 
-### P0：修正原模型错误
+### P1：加入 moments
 
-- 服务时间改为 AXI transaction/burst 在瓶颈链路上的实际 serialization or locked-busy time，不再使用 `max(RTT, serialization)`。
-- 固定延迟和排队延迟分离。
-- 使用 transaction/s 与 transaction service time 的一致单位；若底层以 beat/flit 仲裁，则统一切换到实际仲裁单元，不能混用 transaction arrival rate 与 flit service time。
-- utility 全部统一为 cycles/s 或 cycles/access。
-- 使用总 queue cost difference 计算拥塞外部性。
+- 记录 inter-arrival 和 service time；
+- 计算 $C_A^2$、$C_S^2$；
+- 实现 G/G/1 predictor 和利用率 guard。
 
-### P1：加入 burst-aware moments
+### P2：加入 feedback
 
-- 记录 inter-arrival time。
-- 计算并平滑 $C_A^2$。
-- 按 AXI channel、transaction type 和 burst-length mixture 计算 $C_S^2$。
-- 实现 G/G/1 moment predictor 和 $\rho_{max}$ guard。
-
-### P2：加入 measured queue feedback
-
-- 记录真实 enqueue-to-service delay、queue occupancy 和 backpressure。
-- 实现 $\beta$ 校准与硬反馈阈值。
+- 记录实际 queue wait、occupancy 和 backpressure；
+- 实现 $\beta$ 校准；
 - 支持持续拥塞时收缩 allocation。
 
-### P3：验证与论文材料
+### P3：实验与论文
 
-- 完成模型/模拟器/oracle 对比。
-- 完成 burst traffic 与 writeback stress test。
-- 完成策略消融、误差和分配决策一致率分析。
-- 更新论文公式、算法、limitations 和 reviewer response。
+- 完成 synthetic calibration；
+- 完成多核 burst/writeback stress；
+- 完成真实 workload 和 oracle 对比；
+- 更新论文公式、算法、limitations 和 rebuttal。
 
-## 17. 实验启动前检查清单
+## 14. 工程实现最终公式
 
-只有以下项目全部确认后，才启动大规模 workload sweep：
+本节是 UACC allocator 的最终工程版本。候选计算全部使用每个 profiling window 的 packet count，不再显式计算候选到达率、平均服务时间、服务时间方差或平均等待时间。
 
-### 17.1 模型语义
+所有成本统一为：
 
-- [ ] 明确 AXI4 数据宽度、最大 burst length 和 D2D bridge framing。
-- [ ] 明确实验是完整 AXI timing model 还是 AXI-like abstraction，并在论文中使用一致措辞。
-- [ ] 明确 R/W burst 是否从 grant 保持到 `RLAST/WLAST`，以及是否允许不同 ID 在 beat/flit 级交错。
-- [ ] 明确请求与响应是否共享物理 serializer，或分别建模有向链路。
-- [ ] 确认 customer、enqueue、service start、service end 四个观测点与实际仲裁粒度一致。
-- [ ] 确认 RTT 只计入固定延迟，不进入 service time。
-- [ ] 确认 queue waiting 没有重复计入 $S$ 和 $W_q^{obs}$。
+~~~text
+cycles / profiling window
+~~~
 
-### 17.2 拓扑与单位
+### 14.1 硬件状态
 
-- [ ] 解决“每核独立 `SerialLink` 与全局 $\lambda$”的不一致。
-- [ ] 确认所有 arrival rate 使用 transaction/s，service time 使用 s 或 simulator ticks，并在公式入口统一单位。
-- [ ] 确认带宽使用 decimal GB/s 还是 binary GiB/s，并在论文和 gem5 配置中保持一致。
-- [ ] 确认 AR/AW/R/W/B 或 bridge message class 的大小与 burst mapping 可从配置复现。
-- [ ] 确认 `ReadReq` 等控制事务没有直接按 `pkt->getSize()` 的 cache-line 大小计费。
-- [ ] 确认 writeback、remote miss response 和控制事务没有从流量统计中遗漏。
+对每个实际 queueing domain，窗口长度为 $T$ cycles。运行时维护：
 
-### 17.3 统计正确性
+| 状态 | 含义 |
+|---|---|
+| $N$ | 当前窗口 packet 数 |
+| $M$ | 有效 inter-arrival sample 数 |
+| $S_A=\sum A_n$ | inter-arrival time 累加 |
+| $S_{A2}=\sum A_n^2$ | inter-arrival square 累加 |
+| $n_j$ | 第 $j$ 类 packet 的数量 |
+| $S_W=\sum W_{q,n}^{obs}$ | 实测 queue-wait cycles 总和 |
+| buffer-full counter | buffer-full 次数 |
+| backpressure counter | retry/backpressure 次数 |
 
-- [ ] 用人工 trace 验证 $\lambda$、$E[A]$、$C_A^2$。
-- [ ] 用固定和混合 burst length 验证 $E[S]$、$E[S^2]$、$C_S^2$。
-- [ ] 验证 $C_A^2=1$ 时 G/G/1 与 M/G/1 数值一致。
-- [ ] 验证 service start/end 统计得到的 busy time 与链路实际发送周期一致。
-- [ ] 验证 observed queue delay 与 queue occupancy、retry/backpressure 变化方向一致。
-- [ ] 验证低样本窗口、零等待窗口、$\rho\rightarrow\rho_{max}$ 和数值溢出处理。
+每类 packet 的服务时间 $S_j$ 和 $S_j^2$ 是配置常数。实现只累计 packet-class count，不需要逐 packet 计算 service-time square。
 
-### 17.4 分配器正确性
+### 14.2 Burstiness
 
-- [ ] 候选 utility 使用 cycles/s 或 cycles/access 的统一量纲。
-- [ ] 候选 queue cost 使用 $\Lambda'W_q'-\Lambda W_q$，包含对既有流量的外部性。
-- [ ] 0 way → 1 way 的 remote-lookup activation cost 被正确建模。
-- [ ] 多 way lookahead 使用 per-way score 或有明确的累计收益解释。
-- [ ] utilization、occupancy 和 feedback guard 能拒绝危险候选。
-- [ ] 持续拥塞时 allocation 能收缩且不会频繁振荡。
+当前窗口的到达间隔平方变异系数直接由整数和计算：
 
-### 17.5 数据与可复现性
+$$
+C_A^2
+=
+\max\left(
+0,
+\frac{M S_{A2}}{S_A^2}-1
+\right).
+$$
 
-- [ ] 每次运行记录 git revision、完整命令行、随机种子和配置 dump。
-- [ ] 原始 window-level statistics 与最终汇总结果分开保存。
-- [ ] 所有图表可由脚本从原始统计重新生成。
-- [ ] M/G/1、G/G/1、feedback 和 oracle 使用完全相同的 workload region 与硬件配置。
-- [ ] 失败、超时和不稳定运行不能静默排除，需在实验日志中记录原因。
+边界处理：
 
-## 18. 最终论文边界声明
+- 若 $M=0$，沿用上一窗口结果；
+- 若 $M>0$ 且 $S_A=0$，设置为 CA2_MAX；
+- 所有结果在写回前饱和到配置位宽。
 
-本模型的可辩护结论是：
+使用 shift-EWMA：
 
-> UACC uses measured first-two-moment traffic statistics and runtime queue feedback to make its allocation decisions robust to bursty AXI transaction arrivals and D2D backpressure.
+$$
+\bar C_A^2
+\leftarrow
+\bar C_A^2
++
+\frac{C_A^2-\bar C_A^2}{2^{g_A}}.
+$$
 
-本模型不声称：
+最终使用：
 
-- 对任意相关到达过程给出精确闭式解。
-- 预测 worst-case、P99 或实时上界。
-- 替代 cycle-accurate NoC/D2D simulation。
-- 与 Mandal 等人的 GGeo/maximum-entropy 网络模型具有相同的建模范围。
+$$
+C_{A,eff}^2=\max(1,\bar C_A^2).
+$$
 
-如果实验显示该轻量模型在强相关或极端 burst 下仍有明显误判，应将这些配置作为 limitation 报告，并依靠 occupancy/backpressure guard 保证安全，而不是将解析近似描述为完整流量模型。
+建议首版使用 $g_A=2$，即 $\alpha_A=1/4$。
+
+### 14.3 候选 packet count
+
+ATD 对候选 allocation 直接预测窗口内 packet 数，而不是先计算 probability 或 packet rate。
+
+对核心 $i$：
+
+$$
+\Delta H_i
+=
+H_i(k_i+\Delta)-H_i(k_i),
+$$
+
+其中 $H_i(k)$ 是 ATD 预测在 $k$ 个远端 way 下的远端命中数量。
+
+典型 packet class count 为：
+
+~~~text
+request_count       = local_miss_count, if allocation > 0
+hit_response_count  = predicted_remote_hits
+miss_response_count = local_miss_count - predicted_remote_hits
+writeback_count     = measured or separately predicted writebacks
+~~~
+
+从 0 way 增加到 1 way 时，必须计入 remote-lookup activation cost。
+
+### 14.4 直接 queue-cost
+
+对候选 allocation $\mathbf{k}$，定义：
+
+$$
+R_0(\mathbf{k})
+=
+\sum_j n_j(\mathbf{k}),
+$$
+
+$$
+R_1(\mathbf{k})
+=
+\sum_j n_j(\mathbf{k})S_j,
+$$
+
+$$
+R_2(\mathbf{k})
+=
+\sum_j n_j(\mathbf{k})S_j^2.
+$$
+
+含义：
+
+- $R_0$：窗口内 packet 总数；
+- $R_1$：窗口内预测 busy cycles；
+- $R_2$：服务时间二阶加权和。
+
+利用率 guard 不需要除法：
+
+$$
+R_1(\mathbf{k})<\rho_{max}T.
+$$
+
+若不满足，直接拒绝候选。
+
+G/G/1 的总排队成本直接计算为：
+
+$$
+\boxed{
+Q^{model}(\mathbf{k})
+=
+\frac{
+R_1(\mathbf{k})^2
+\left(C_{A,eff}^2-1\right)
++
+R_0(\mathbf{k})R_2(\mathbf{k})
+}{
+2\left(T-R_1(\mathbf{k})\right)
+}
+}
+$$
+
+该式的输出单位为 queue stall cycles/window，与先计算候选 $E[S]$、$C_S^2$、$W_q$，再乘 packet rate 的完整 G/G/1 路径代数等价。
+
+候选数据通路为：
+
+~~~text
+busy_square = R1 * R1
+burst_term  = busy_square * (CA2_eff - 1)
+service_term = R0 * R2
+numerator   = burst_term + service_term
+slack       = T - R1
+queue_cost  = numerator / (2 * slack)
+~~~
+
+每个候选只保留一次 reciprocal/division。
+
+### 14.5 Feedback
+
+当前窗口的实测总排队成本为：
+
+$$
+Q^{obs}=S_W.
+$$
+
+feedback factor 为：
+
+$$
+\beta_{raw}
+=
+\operatorname{clip}
+\left(
+\frac{Q^{obs}}
+     {\max(Q^{model,current},\epsilon)},
+1,\beta_{max}
+\right).
+$$
+
+使用 shift-EWMA：
+
+$$
+\bar\beta
+\leftarrow
+\bar\beta+
+\frac{\beta_{raw}-\bar\beta}{2^{g_\beta}}.
+$$
+
+建议首版使用 $g_\beta=2$、$\beta_{max}=4$。
+
+候选最终排队成本：
+
+$$
+\widehat Q(\mathbf{k})
+=
+\bar\beta Q^{model}(\mathbf{k}).
+$$
+
+feedback 只使用已经完成的当前窗口数据，不能读取候选或下一窗口 trace。
+
+### 14.6 Utility
+
+容量收益：
+
+$$
+G_i(\Delta)
+=
+\Delta H_i L_{lower,i}.
+$$
+
+固定通信成本：
+
+$$
+F(\mathbf{k})
+=
+\sum_{\ell,j}
+n_{\ell,j}(\mathbf{k})L_{fixed,\ell,j}.
+$$
+
+最终边际效用：
+
+$$
+\boxed{
+MU_i(\Delta)
+=
+G_i(\Delta)
+-
+\left[
+F(\mathbf{k}')-F(\mathbf{k})
+\right]
+-
+\sum_\ell
+\left[
+\widehat Q_\ell(\mathbf{k}')
+-
+\widehat Q_\ell(\mathbf{k})
+\right]
+}
+$$
+
+接受候选必须同时满足：
+
+~~~text
+MU_i(delta) > 0
+R1_link < rho_max * T
+queue occupancy guard passes
+backpressure guard passes
+~~~
+
+若 lookahead $\Delta\in\{1,2,4\}$ 但每次只提交一个 way：
+
+$$
+Score_i(\Delta)=\frac{MU_i(\Delta)}{\Delta}.
+$$
+
+除以 $\Delta$ 分别实现为不移位、右移 1 位和右移 2 位。
+
+### 14.7 HLS/RTL 执行顺序
+
+~~~text
+per packet:
+    update arrival sums, packet-class count, and observed wait sum
+
+at window boundary:
+    1. compute CA2 and update shift-EWMA
+    2. update feedback beta from the completed window
+    3. build candidate packet counts from ATD
+    4. accumulate candidate R0, R1, and R2
+    5. reject utilization/backpressure violations
+    6. compute direct queue cost
+    7. compute fixed cost, capacity gain, and utility
+    8. retain the highest positive score
+    9. commit allocation and reset window counters
+~~~
+
+实现建议：
+
+- $S_j$、$S_j^2$ 和 $L_{fixed,j}$ 预存为常数；
+- 所有候选共享乘法器和 reciprocal/divider；
+- EWMA 和 lookahead division 使用移位；
+- 累加器使用整数饱和运算；
+- $C_A^2$、$\beta$ 和 reciprocal 使用参数化定点格式；
+- 计算不进入 packet data-path critical path。
+
+### 14.8 已完成验证
+
+实现位置：
+
+- util/uacc_gg1_sim.py：rate-direct 和 window-count direct；
+- util/compare_uacc_models.py：窗口级、多 seed allocation equivalence；
+- tests/pyunit/uacc/pyunit_gg1_sim.py：公式与因果 allocation 单测。
+
+验证结果：
+
+~~~text
+13 Python tests passed
+py_compile passed
+pycodestyle passed
+git diff --check passed
+
+20-seed causal allocation:
+full G/G/1 vs window-count agreement = 100%
+window-count vs measured oracle agreement = 100%
+max window-count candidate objective difference = 2.665e-15
+mean window-count oracle regret = 0
+~~~
+
+窗口级 window-count 与 rate-direct 的最大差异为：
+
+$$
+4.263\times10^{-14}.
+$$
+
+完整浮点 G/G/1 与 raw-sum/direct 路径的最大差异为：
+
+$$
+1.563\times10^{-13}.
+$$
+
+因此，window-count direct 公式是最终工程实现路径。在理想算术下没有观察到 prediction、objective 或 allocation 损失。尚未量化的误差只包括 Q-format、取整、饱和位宽和 reciprocal approximation。
