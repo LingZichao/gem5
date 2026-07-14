@@ -1238,6 +1238,17 @@ class Packet : public Printable, public Extensible<Packet>
     }
 
     /**
+     * Whether this packet already owns or references a data buffer.
+     * Commands and data-buffer ownership are independent: a read request
+     * may acquire its buffer before it is converted to a response.
+     */
+    bool
+    hasDataPtr() const
+    {
+        return flags.isSet(STATIC_DATA | DYNAMIC_DATA);
+    }
+
+    /**
      * Get the data in the packet byte swapped from big endian to
      * host endian.
      */

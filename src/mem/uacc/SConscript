@@ -1,0 +1,18 @@
+# -*- mode:python -*-
+
+Import('*')
+
+SimObject('UACC.py', sim_objects=[
+    'UACCController',
+    'UACCSelector',
+    'UACCCache',
+    'UACCPartitionManager',
+    'UACCCapacityPolicy',
+])
+
+Source('uacc_controller.cc')
+Source('uacc_selector.cc')
+Source('uacc_cache.cc')
+Source('uacc_partition.cc')
+
+DebugFlag('UACC')
