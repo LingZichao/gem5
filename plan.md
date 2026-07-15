@@ -162,6 +162,11 @@ utility = capacity_gain - queue_penalty
   wait、预测 wait、feedback beta、occupancy 和 backpressure。
 - 相同固定 cache-line 流量下，G/G/1+feedback 与 Section 14 的候选预测一致，
   与 model.md 的代数等价关系相符；二者与 legacy M/G/1 分开可切换用于消融。
+- DPC3 SPEC2017 trace suite 支持单核和四核 multi-program mix、每核独立地址区域、
+  周期 stats timeline 与 JSON 汇总。百万指令四核 memory/balanced mix 均完成
+  102 个 profiling windows；两种 queue model 的 allocation timeline 完全一致。
+- allocator 每个窗口最多提交一个 way，并在收缩后使用 recovery cooldown；
+  nominal 四核 mix 在填满预算后保持稳定，严苛 guard 场景可受控收缩。
 - `configs/example/cache_partitioning.py` 基线回归通过。
 - `git diff --check`、Python 语法检查和 `python3 util/style.py -m` 通过。
 

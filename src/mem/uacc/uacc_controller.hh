@@ -165,11 +165,13 @@ class UACCController : public ClockedObject
     const unsigned queueOccupancyThreshold;
     const unsigned backpressureThreshold;
     const unsigned contractionWindows;
+    const unsigned recoveryWindows;
     const unsigned requestSize;
 
     UACCPartitionManager *partitionManager;
     std::vector<CoreState> cores;
     std::vector<unsigned> allocations;
+    unsigned recoveryCooldown = 0;
 
     EventFunctionWrapper profileEvent;
     UACCStats stats;

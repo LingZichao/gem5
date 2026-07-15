@@ -350,35 +350,31 @@ collect ATD and per-domain queue statistics
 update lambda, CA2, CS2 and feedback beta
 
 initialize candidate allocation vector k
+best_candidate = none
 
-while remote ways remain:
-    best_candidate = none
+for each core i:
+    for each lookahead delta:
+        predict candidate packet rates
 
-    for each core i:
-        for each lookahead delta:
-            predict candidate packet rates
+        if utilization or measured-congestion guard fails:
+            reject candidate
+            continue
 
-            if utilization or measured-congestion guard fails:
-                reject candidate
-                continue
+        compute capacity gain
+        compute fixed-cost difference
+        compute total queue-cost difference
+        compute utility and per-way score
 
-            compute capacity gain
-            compute fixed-cost difference
-            compute total queue-cost difference
-            compute utility and per-way score
+        retain highest positive score
 
-            retain highest positive score
-
-    if no positive candidate exists:
-        break
-
+if a positive candidate exists:
     commit one way to the selected core
-    update predicted traffic
 
 apply allocation
 
 if measured congestion remains high for multiple windows:
     contract the lowest-benefit allocation
+    wait recovery_windows congestion-free windows before expanding
 ```
 
 ## 8. gem5 修改要求
@@ -432,6 +428,7 @@ rho_max
 queue_occupancy_threshold
 backpressure_threshold
 contraction_windows
+recovery_windows
 ```
 
 上述 moment、EWMA、feedback、利用率 guard 和 occupancy/backpressure guard 已
@@ -444,8 +441,9 @@ section14       direct window-count formula + measured beta feedback
 ```
 
 `contraction_windows` 个连续拥塞窗口会触发最低边际容量收益核心收缩一个
-way；后续窗口仍运行同一正效用扩容循环，因此收缩后的容量可以在拥塞消退后
-重新分配。buffer-full 和 request/response downstream retry 都按事件计数，
+way；随后至少等待 `recovery_windows` 个无新拥塞的窗口才允许重新扩容。
+每个 profiling window 最多增加或减少一个 way，避免单窗口填满预算及收缩后
+立即反向扩容。buffer-full 和 request/response downstream retry 都按事件计数，
 并参与有效性 guard。
 
 ### 8.3 拓扑一致性

@@ -104,6 +104,9 @@ class UACCController(ClockedObject):
     contraction_windows = Param.Unsigned(
         3, "Consecutive congested windows before contracting one way"
     )
+    recovery_windows = Param.Unsigned(
+        3, "Congestion-free windows required before expanding after contraction"
+    )
     partition_manager = Param.UACCPartitionManager(
         NULL, "Partition manager for the remote cache"
     )

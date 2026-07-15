@@ -109,6 +109,7 @@ UACCController::UACCController(const Params &p)
       queueOccupancyThreshold(p.queue_occupancy_threshold),
       backpressureThreshold(p.backpressure_threshold),
       contractionWindows(std::max(1u, p.contraction_windows)),
+      recoveryWindows(std::max(1u, p.recovery_windows)),
       requestSize(std::max(1u, p.request_size)),
       partitionManager(p.partition_manager),
       cores(numCores),
@@ -353,7 +354,13 @@ UACCController::recordQueuePacket(
         return;
 
     auto &queue = queueState(coreId, direction);
-    auto &window = queue.pendingWindows[queueWindowIndex(timing.enqueue)];
+    uint64_t windowIndex = queueWindowIndex(timing.enqueue);
+    // A packet may complete after its enqueue window has already crossed the
+    // grace period.  Attribute that late sample to the next open window so it
+    // cannot recreate an already processed bucket indefinitely.
+    if (queue.haveProcessedWindow && windowIndex <= queue.processedWindow)
+        windowIndex = queue.processedWindow + 1;
+    auto &window = queue.pendingWindows[windowIndex];
     ++window.packetCount;
     window.arrivalTicks.push_back(timing.enqueue);
 
@@ -721,12 +728,16 @@ UACCController::runAllocator()
         const uint64_t lastCompleteWindow = currentWindow - 2;
         for (auto &core : cores) {
             for (auto &queue : core.queues) {
-                auto it = queue.pendingWindows.begin();
-                while (it != queue.pendingWindows.end() &&
-                       it->first <= lastCompleteWindow) {
-                    updateQueueState(queue, it->second);
+                uint64_t windowIndex = queue.haveProcessedWindow ?
+                    queue.processedWindow + 1 : 0;
+                while (windowIndex <= lastCompleteWindow) {
+                    QueueWindow emptyWindow;
+                    auto it = queue.pendingWindows.find(windowIndex);
+                    QueueWindow &window = it == queue.pendingWindows.end() ?
+                        emptyWindow : it->second;
+                    updateQueueState(queue, window);
                     queue.haveProcessedWindow = true;
-                    queue.processedWindow = it->first;
+                    queue.processedWindow = windowIndex;
                     if (queueModel != "mg1")
                         updateFeedback(queue);
                     if (queueCongested(queue))
@@ -735,7 +746,9 @@ UACCController::runAllocator()
                         queue.congestionWindows = 0;
                     contract |=
                         queue.congestionWindows >= contractionWindows;
-                    it = queue.pendingWindows.erase(it);
+                    if (it != queue.pendingWindows.end())
+                        queue.pendingWindows.erase(it);
+                    ++windowIndex;
                 }
             }
         }
@@ -747,29 +760,34 @@ UACCController::runAllocator()
     const bool useFeedback = queueModel == "gg1-feedback" ||
         queueModel == "section14" || queueModel == "section14-feedback";
 
-    if (contract && allocated != 0) {
-        unsigned contractCore = numCores;
-        double lowestBenefit = std::numeric_limits<double>::infinity();
-        for (unsigned coreId = 0; coreId < numCores; ++coreId) {
-            if (next[coreId] == 0)
-                continue;
-            std::vector<unsigned> smaller = next;
-            --smaller[coreId];
-            const double benefit = capacityGain(next) -
-                capacityGain(smaller);
-            if (benefit < lowestBenefit) {
-                lowestBenefit = benefit;
-                contractCore = coreId;
+    if (contract) {
+        recoveryCooldown = recoveryWindows;
+        if (allocated != 0) {
+            unsigned contractCore = numCores;
+            double lowestBenefit = std::numeric_limits<double>::infinity();
+            for (unsigned coreId = 0; coreId < numCores; ++coreId) {
+                if (next[coreId] == 0)
+                    continue;
+                std::vector<unsigned> smaller = next;
+                --smaller[coreId];
+                const double benefit = capacityGain(next) -
+                    capacityGain(smaller);
+                if (benefit < lowestBenefit) {
+                    lowestBenefit = benefit;
+                    contractCore = coreId;
+                }
+            }
+            if (contractCore != numCores) {
+                --next[contractCore];
+                --allocated;
+                DPRINTF(UACC, "allocator model=%s contracted core %u to %u "
+                        "after %u congested windows\n", queueModel,
+                        contractCore, next[contractCore], contractionWindows);
             }
         }
-        if (contractCore != numCores) {
-            --next[contractCore];
-            --allocated;
-            DPRINTF(UACC, "allocator model=%s contracted core %u to %u "
-                    "after %u congested windows\n", queueModel,
-                    contractCore, next[contractCore], contractionWindows);
-        }
-    } else while (allocated < maxRemoteWays) {
+    } else if (recoveryCooldown != 0) {
+        --recoveryCooldown;
+    } else if (allocated < maxRemoteWays) {
         double bestScore = 0.0;
         double bestUtility = 0.0;
         unsigned bestCore = numCores;
@@ -817,17 +835,16 @@ UACCController::runAllocator()
             }
         }
 
-        if (bestCore == numCores)
-            break;
+        if (bestCore != numCores) {
+            ++next[bestCore];
+            ++allocated;
+            utilities[bestCore] = bestUtility;
 
-        ++next[bestCore];
-        ++allocated;
-        utilities[bestCore] = bestUtility;
-
-        DPRINTF(UACC, "allocator model=%s selected core %u utility=%f "
-                "score=%f lookahead=%u ways=%u\n", queueModel,
-                bestCore, bestUtility, bestScore, bestDelta,
-                next[bestCore]);
+            DPRINTF(UACC, "allocator model=%s selected core %u utility=%f "
+                    "score=%f lookahead=%u ways=%u\n", queueModel,
+                    bestCore, bestUtility, bestScore, bestDelta,
+                    next[bestCore]);
+        }
     }
 
     for (unsigned coreId = 0; coreId < numCores; ++coreId) {

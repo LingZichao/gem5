@@ -10,6 +10,7 @@ non-zero static allocation, the second scan can hit in the remote cache.
 """
 
 import argparse
+from pathlib import Path
 
 import m5
 from m5.objects import *
@@ -94,6 +95,7 @@ parser.add_argument("--feedback-beta-max", type=float, default=4.0)
 parser.add_argument("--queue-occupancy-threshold", type=int, default=0)
 parser.add_argument("--backpressure-threshold", type=int, default=0)
 parser.add_argument("--contraction-windows", type=int, default=3)
+parser.add_argument("--recovery-windows", type=int, default=3)
 parser.add_argument("--distance-ns", type=float, default=10.0)
 parser.add_argument(
     "--atomic-swap",
@@ -123,6 +125,23 @@ parser.add_argument("--passes", type=int, default=2)
 parser.add_argument("--read-percent", type=int, default=100)
 parser.add_argument("--max-outstanding", type=int, default=8)
 parser.add_argument("--maxtick", type=int, default=10_000_000)
+parser.add_argument(
+    "--trace-file",
+    action="append",
+    default=[],
+    help="gem5 protobuf packet trace; repeat once per core",
+)
+parser.add_argument(
+    "--trace-addr-stride",
+    default="0B",
+    help="per-core address offset for independent multi-program traces",
+)
+parser.add_argument(
+    "--stats-interval",
+    type=int,
+    default=0,
+    help="dump cumulative statistics periodically for long-run observation",
+)
 args = parser.parse_args()
 
 if args.num_cores < 1:
@@ -143,6 +162,8 @@ if args.backpressure_threshold < 0:
     parser.error("--backpressure-threshold must be non-negative")
 if args.contraction_windows < 1:
     parser.error("--contraction-windows must be positive")
+if args.recovery_windows < 1:
+    parser.error("--recovery-windows must be positive")
 request_size = args.request_size or max(1, args.cache_line_size // 4)
 if request_size < 1 or request_size > args.cache_line_size:
     parser.error("request-size must be between 1 and cache-line-size")
@@ -150,8 +171,20 @@ if args.cache_line_size % request_size:
     parser.error("request-size must divide cache-line-size")
 if args.passes < 1:
     parser.error("--passes must be positive")
+if args.stats_interval < 0:
+    parser.error("--stats-interval must be non-negative")
+if args.maxtick < 1:
+    parser.error("--maxtick must be positive")
 if not 0 <= args.read_percent <= 100:
     parser.error("--read-percent must be between 0 and 100")
+if args.trace_file:
+    if len(args.trace_file) == 1:
+        args.trace_file *= args.num_cores
+    if len(args.trace_file) != args.num_cores:
+        parser.error("--trace-file must be given once or once per core")
+    missing = [path for path in args.trace_file if not Path(path).is_file()]
+    if missing:
+        parser.error(f"trace files do not exist: {', '.join(missing)}")
 
 if args.d2d_interface == "custom":
     d2d_rtt_ns = 10.0
@@ -189,6 +222,7 @@ remote_bytes = toMemorySize(args.remote_size)
 working_set_bytes = toMemorySize(args.working_set)
 memory_bytes = toMemorySize(args.memory_size)
 local_bytes = toMemorySize(args.local_size)
+trace_addr_stride = toMemorySize(args.trace_addr_stride)
 if remote_bytes % (args.cache_line_size * args.remote_assoc):
     parser.error("remote-size must be divisible by line size times assoc")
 if working_set_bytes % args.cache_line_size:
@@ -199,6 +233,10 @@ if local_bytes % (args.cache_line_size * args.local_assoc):
     parser.error("local-size must be divisible by line size times assoc")
 if working_set_bytes * args.num_cores > memory_bytes:
     parser.error("working sets do not fit in memory-size")
+if trace_addr_stride < 0:
+    parser.error("trace-addr-stride must be non-negative")
+if trace_addr_stride and trace_addr_stride * args.num_cores > memory_bytes:
+    parser.error("per-core trace address regions do not fit in memory-size")
 
 remote_sets = remote_bytes // (args.cache_line_size * args.remote_assoc)
 if args.max_remote_ways is None:
@@ -266,6 +304,7 @@ system.uacc_controller = UACCController(
     queue_occupancy_threshold=args.queue_occupancy_threshold,
     backpressure_threshold=args.backpressure_threshold,
     contraction_windows=args.contraction_windows,
+    recovery_windows=args.recovery_windows,
     initial_allocation=initial_allocation,
     dynamic_allocation=args.uacc_policy != "static",
     partition_manager=partition_manager,
@@ -336,6 +375,16 @@ root = Root(full_system=False, system=system)
 m5.instantiate()
 
 for tgen, core_id in traffic_generators:
+    if args.trace_file:
+        tgen.start([
+            tgen.createTrace(
+                args.maxtick + 1,
+                str(Path(args.trace_file[core_id]).resolve()),
+                core_id * trace_addr_stride,
+            )
+        ])
+        continue
+
     base = core_id * working_set_bytes
     passes = [
         tgen.createLinear(
@@ -352,5 +401,14 @@ for tgen, core_id in traffic_generators:
     ]
     tgen.start(passes + [tgen.createExit(1)])
 
-exit_event = m5.simulate(args.maxtick)
+if args.stats_interval:
+    exit_event = None
+    while m5.curTick() < args.maxtick:
+        duration = min(args.stats_interval, args.maxtick - m5.curTick())
+        exit_event = m5.simulate(duration)
+        m5.stats.dump()
+        if exit_event.getCause() != "simulate() limit reached":
+            break
+else:
+    exit_event = m5.simulate(args.maxtick)
 print(f"Exiting @ tick {m5.curTick()} because {exit_event.getCause()}")
