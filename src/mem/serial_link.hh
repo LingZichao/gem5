@@ -52,6 +52,7 @@
 
 #include "base/types.hh"
 #include "mem/port.hh"
+#include "mem/serial_link_model.hh"
 #include "params/SerialLink.hh"
 #include "sim/clocked_object.hh"
 
@@ -271,6 +272,9 @@ class SerialLink : public ClockedObject
          */
         bool reqQueueFull() const;
 
+        /** Current number of packets waiting for request transmission. */
+        unsigned reqQueueSize() const { return transmitList.size(); }
+
         /**
          * Queue a request packet to be sent out later and also schedule
          * a send if necessary.
@@ -323,6 +327,24 @@ class SerialLink : public ClockedObject
     typedef SerialLinkParams Params;
 
     SerialLink(const SerialLinkParams &p);
+
+    /** Payload serialization in cycles, following Packet size conventions. */
+    static Cycles
+    serializationCycles(unsigned payload_size, bool has_size,
+                        unsigned num_lanes, unsigned link_speed)
+    {
+        return serial_link::serializationCycles(
+            payload_size, has_size, num_lanes, link_speed);
+    }
+
+    static Cycles
+    serializationCycles(PacketPtr pkt, unsigned num_lanes,
+                        unsigned link_speed)
+    {
+        return serializationCycles(
+            pkt && pkt->hasSize() ? pkt->getSize() : 0,
+            pkt && pkt->hasSize(), num_lanes, link_speed);
+    }
 };
 
 } // namespace gem5

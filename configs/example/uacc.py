@@ -65,6 +65,12 @@ parser.add_argument(
     choices=["static", "greedy", "distance", "congestion"],
     default="static",
 )
+parser.add_argument(
+    "--uacc-queue-model",
+    choices=["mg1", "gg1-feedback", "section14"],
+    default="mg1",
+    help="Queue-cost model used by the congestion allocator",
+)
 parser.add_argument("--initial-allocation", default="2")
 parser.add_argument("--max-remote-ways", type=int, default=None)
 parser.add_argument("--remote-size", default="4KiB")
@@ -82,6 +88,12 @@ parser.add_argument(
 parser.add_argument("--profile-interval", type=int, default=1000)
 parser.add_argument("--profile-depth", type=int, default=64)
 parser.add_argument("--sampled-sets", type=int, default=16)
+parser.add_argument("--min-arrival-samples", type=int, default=32)
+parser.add_argument("--rho-max", type=float, default=0.90)
+parser.add_argument("--feedback-beta-max", type=float, default=4.0)
+parser.add_argument("--queue-occupancy-threshold", type=int, default=0)
+parser.add_argument("--backpressure-threshold", type=int, default=0)
+parser.add_argument("--contraction-windows", type=int, default=3)
 parser.add_argument("--distance-ns", type=float, default=10.0)
 parser.add_argument(
     "--atomic-swap",
@@ -119,6 +131,18 @@ if args.remote_assoc < 1:
     parser.error("--remote-assoc must be positive")
 if args.local_assoc < 1:
     parser.error("--local-assoc must be positive")
+if args.min_arrival_samples < 1:
+    parser.error("--min-arrival-samples must be positive")
+if not 0.0 < args.rho_max < 1.0:
+    parser.error("--rho-max must be between zero and one")
+if args.feedback_beta_max < 1.0:
+    parser.error("--feedback-beta-max must be at least one")
+if args.queue_occupancy_threshold < 0:
+    parser.error("--queue-occupancy-threshold must be non-negative")
+if args.backpressure_threshold < 0:
+    parser.error("--backpressure-threshold must be non-negative")
+if args.contraction_windows < 1:
+    parser.error("--contraction-windows must be positive")
 request_size = args.request_size or max(1, args.cache_line_size // 4)
 if request_size < 1 or request_size > args.cache_line_size:
     parser.error("request-size must be between 1 and cache-line-size")
@@ -231,7 +255,17 @@ system.uacc_controller = UACCController(
     # treats the G prefix as GiB.  Pass an explicit B/s value so the
     # controller receives the exact decimal bandwidth in ticks/byte.
     d2d_bandwidth=f"{d2d_bandwidth_gb_s * 1_000_000_000:g}B/s",
+    request_size=request_size,
     allocation_policy=args.uacc_policy,
+    queue_model=args.uacc_queue_model,
+    min_arrival_samples=args.min_arrival_samples,
+    ca2_ewma_shift=2,
+    feedback_ewma_shift=2,
+    feedback_beta_max=args.feedback_beta_max,
+    rho_max=args.rho_max,
+    queue_occupancy_threshold=args.queue_occupancy_threshold,
+    backpressure_threshold=args.backpressure_threshold,
+    contraction_windows=args.contraction_windows,
     initial_allocation=initial_allocation,
     dynamic_allocation=args.uacc_policy != "static",
     partition_manager=partition_manager,
@@ -296,7 +330,7 @@ print(
     "UACC D2D: "
     f"interface={args.d2d_interface} point={args.d2d_point} "
     f"rtt={d2d_rtt_ns:g}ns bandwidth={d2d_bandwidth_gb_s:g}GB/s "
-    f"buffer={d2d_buffer_flits} flits"
+    f"buffer={d2d_buffer_flits} flits model={args.uacc_queue_model}"
 )
 root = Root(full_system=False, system=system)
 m5.instantiate()

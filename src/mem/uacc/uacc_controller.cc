@@ -3,14 +3,23 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <numeric>
 
 #include "base/logging.hh"
 #include "debug/UACC.hh"
 #include "mem/uacc/uacc_partition.hh"
+#include "mem/uacc/uacc_queue_model.hh"
 #include "sim/core.hh"
 
 namespace gem5
 {
+
+namespace
+{
+
+constexpr double Ca2Max = 1.0e6;
+
+} // anonymous namespace
 
 UACCController::UACCStats::UACCStats(UACCController &controller)
     : statistics::Group(&controller),
@@ -37,10 +46,37 @@ UACCController::UACCStats::UACCStats(UACCController &controller)
       ADD_STAT(allocationWays, statistics::units::Count::get(),
                "Current remote way allocation per core"),
       ADD_STAT(lastUtility, statistics::units::Count::get(),
-               "Last selected marginal utility per core")
+               "Last selected marginal utility per core"),
+      ADD_STAT(queuePackets, statistics::units::Count::get(),
+               "Packets observed at each UACC request/response queue"),
+      ADD_STAT(queueCA2, statistics::units::Ratio::get(),
+               "Effective arrival-interval squared coefficient of variation"),
+      ADD_STAT(queueCS2, statistics::units::Ratio::get(),
+               "Service-time squared coefficient of variation"),
+      ADD_STAT(queueUtilization, statistics::units::Ratio::get(),
+               "Observed queue utilization"),
+      ADD_STAT(queueObservedWait, statistics::units::Cycle::get(),
+               "Observed mean queue wait"),
+      ADD_STAT(queuePredictedWait, statistics::units::Cycle::get(),
+               "Predicted mean queue wait"),
+      ADD_STAT(queueFeedback, statistics::units::Ratio::get(),
+               "Measured queue feedback multiplier"),
+      ADD_STAT(queueBackpressure, statistics::units::Count::get(),
+               "Observed queue backpressure events"),
+      ADD_STAT(queueOccupancy, statistics::units::Count::get(),
+               "Maximum observed queue occupancy")
 {
     allocationWays.init(controller.numCores);
     lastUtility.init(controller.numCores);
+    queuePackets.init(controller.numCores * 2);
+    queueCA2.init(controller.numCores * 2);
+    queueCS2.init(controller.numCores * 2);
+    queueUtilization.init(controller.numCores * 2);
+    queueObservedWait.init(controller.numCores * 2);
+    queuePredictedWait.init(controller.numCores * 2);
+    queueFeedback.init(controller.numCores * 2);
+    queueBackpressure.init(controller.numCores * 2);
+    queueOccupancy.init(controller.numCores * 2);
     allocationWays.flags(statistics::nozero | statistics::oneline);
     lastUtility.flags(statistics::oneline);
 }
@@ -64,6 +100,16 @@ UACCController::UACCController(const Params &p)
       lookaheadDeltas(p.lookahead_deltas),
       distanceNs(p.distance_ns),
       initialAllocation(p.initial_allocation),
+      queueModel(p.queue_model),
+      minArrivalSamples(p.min_arrival_samples),
+      ca2EwmaShift(p.ca2_ewma_shift),
+      feedbackEwmaShift(p.feedback_ewma_shift),
+      feedbackBetaMax(std::max(1.0, p.feedback_beta_max)),
+      rhoMax(std::min(1.0, std::max(0.0, p.rho_max))),
+      queueOccupancyThreshold(p.queue_occupancy_threshold),
+      backpressureThreshold(p.backpressure_threshold),
+      contractionWindows(std::max(1u, p.contraction_windows)),
+      requestSize(std::max(1u, p.request_size)),
       partitionManager(p.partition_manager),
       cores(numCores),
       allocations(numCores, 0),
@@ -77,6 +123,12 @@ UACCController::UACCController(const Params &p)
              allocationPolicy != "distance" &&
              allocationPolicy != "congestion",
              "Unknown UACC allocation policy '%s'", allocationPolicy);
+    fatal_if(queueModel != "mg1" && queueModel != "gg1" &&
+             queueModel != "gg1-feedback" && queueModel != "section14" &&
+             queueModel != "section14-feedback",
+             "Unknown UACC queue model '%s'", queueModel);
+    fatal_if(rhoMax <= 0.0 || rhoMax >= 1.0,
+             "UACC rho_max must be in (0, 1)");
 
     for (auto &core : cores) {
         core.atd.resize(sampledSets);
@@ -159,7 +211,7 @@ UACCController::recordRemoteLookup(unsigned coreId)
 }
 
 void
-UACCController::recordRemoteAccess(unsigned coreId, bool hit)
+UACCController::recordRemoteAccess(unsigned coreId, bool hit, PacketPtr pkt)
 {
     if (coreId >= cores.size())
         return;
@@ -170,6 +222,45 @@ UACCController::recordRemoteAccess(unsigned coreId, bool hit)
     } else {
         ++stats.remoteMisses;
     }
+
+    if (pkt && pkt->req) {
+        if (auto ext = pkt->req->getExtension<UACCRequestExtension>()) {
+            recordQueuePacket(coreId, QueueDirection::Request,
+                              ext->request_queue);
+            ext->request_queue.valid = false;
+        }
+    }
+}
+
+void
+UACCController::recordRemoteResponse(unsigned coreId, PacketPtr pkt)
+{
+    if (coreId >= cores.size() || !pkt || !pkt->req)
+        return;
+
+    if (auto ext = pkt->req->getExtension<UACCRequestExtension>()) {
+        recordQueuePacket(coreId, QueueDirection::Response,
+                          ext->response_queue);
+        ext->response_queue.valid = false;
+    }
+}
+
+void
+UACCController::recordRemoteBackpressure(unsigned coreId)
+{
+    if (coreId >= cores.size())
+        return;
+    auto &queue = queueState(coreId, QueueDirection::Request);
+    ++queue.pendingWindows[queueWindowIndex(curTick())].backpressureEvents;
+}
+
+void
+UACCController::recordRemoteResponseBackpressure(unsigned coreId)
+{
+    if (coreId >= cores.size())
+        return;
+    auto &queue = queueState(coreId, QueueDirection::Response);
+    ++queue.pendingWindows[queueWindowIndex(curTick())].backpressureEvents;
 }
 
 void
@@ -209,15 +300,6 @@ UACCController::histogramCount(const CoreState &core, unsigned begin,
 }
 
 double
-UACCController::remoteProbability(const CoreState &core, unsigned ways) const
-{
-    if (core.localMisses == 0)
-        return 0.0;
-    return static_cast<double>(histogramCount(
-        core, baseWays, baseWays + ways)) / core.localMisses;
-}
-
-double
 UACCController::queueWaitCycles(double lambda) const
 {
     if (lambda <= 0.0 || d2dBandwidth <= 0.0)
@@ -242,6 +324,381 @@ UACCController::queueWaitCycles(double lambda) const
         static_cast<double>(clockPeriod());
 }
 
+UACCController::QueueState &
+UACCController::queueState(unsigned coreId, QueueDirection direction)
+{
+    return cores[coreId].queues[static_cast<unsigned>(direction)];
+}
+
+const UACCController::QueueState &
+UACCController::queueState(unsigned coreId, QueueDirection direction) const
+{
+    return cores[coreId].queues[static_cast<unsigned>(direction)];
+}
+
+uint64_t
+UACCController::queueWindowIndex(Tick tick) const
+{
+    const Tick windowTicks = static_cast<Tick>(profileInterval) *
+        clockPeriod();
+    return windowTicks == 0 ? 0 : tick / windowTicks;
+}
+
+void
+UACCController::recordQueuePacket(
+    unsigned coreId, QueueDirection direction,
+    const UACCRequestExtension::QueueTiming &timing)
+{
+    if (coreId >= cores.size() || !timing.valid)
+        return;
+
+    auto &queue = queueState(coreId, direction);
+    auto &window = queue.pendingWindows[queueWindowIndex(timing.enqueue)];
+    ++window.packetCount;
+    window.arrivalTicks.push_back(timing.enqueue);
+
+    const double period = std::max(1.0,
+        static_cast<double>(clockPeriod()));
+    const double service = timing.service_ticks / period;
+    window.serviceSum += service;
+    window.serviceSquareSum += service * service;
+    const unsigned classId = std::min(
+        static_cast<unsigned>(timing.queue_class), queueClassCount - 1);
+    ++window.classCount[classId];
+    window.classServiceSum[classId] += service;
+    window.classServiceSquareSum[classId] += service * service;
+
+    // service_start is the actual start of serialization.  SerialLink has
+    // already removed the packet's busy time when it records this field; do
+    // not remove it a second time here.  Fixed link delay is excluded from
+    // Wq, and unsigned arithmetic is clipped at both boundaries.
+    const Tick waitTicks = uacc::observedQueueWait(
+        timing.enqueue, timing.service_start, timing.fixed_ticks);
+    window.observedWaitSum += waitTicks / period;
+    ++window.observedWaitSamples;
+
+    window.queueOccupancySum += timing.occupancy;
+    window.queueOccupancyMax = std::max<uint64_t>(
+        window.queueOccupancyMax, timing.occupancy);
+    window.bufferFullEvents += timing.buffer_full_events;
+}
+
+void
+UACCController::updateQueueState(QueueState &queue, QueueWindow &window)
+{
+    std::sort(window.arrivalTicks.begin(), window.arrivalTicks.end());
+    for (const Tick arrival : window.arrivalTicks) {
+        if (queue.haveLastArrival && arrival >= queue.lastArrival) {
+            const long double interval =
+                static_cast<long double>(arrival - queue.lastArrival);
+            ++window.interArrivalSamples;
+            window.interArrivalSum += interval;
+            window.interArrivalSquareSum += interval * interval;
+        }
+        if (!queue.haveLastArrival || arrival > queue.lastArrival) {
+            queue.lastArrival = arrival;
+            queue.haveLastArrival = true;
+        }
+    }
+
+    queue.interArrivalSamples = window.interArrivalSamples;
+    queue.interArrivalSum = window.interArrivalSum;
+    queue.interArrivalSquareSum = window.interArrivalSquareSum;
+    if (window.interArrivalSamples >= minArrivalSamples) {
+        queue.ca2 = uacc::arrivalCa2(
+            window.interArrivalSamples, window.interArrivalSum,
+            window.interArrivalSquareSum, queue.ca2, Ca2Max);
+        const double shift = std::ldexp(1.0,
+            std::min<unsigned>(ca2EwmaShift, 30));
+        queue.ca2Ewma += (queue.ca2 - queue.ca2Ewma) / shift;
+        queue.ca2Ewma = std::max(0.0, queue.ca2Ewma);
+    }
+
+    queue.packetCount = window.packetCount;
+    queue.serviceSum = window.serviceSum;
+    queue.serviceSquareSum = window.serviceSquareSum;
+    queue.observedWaitSum = window.observedWaitSum;
+    queue.observedWaitSamples = window.observedWaitSamples;
+    queue.queueOccupancySum = window.queueOccupancySum;
+    queue.queueOccupancyMax = window.queueOccupancyMax;
+    queue.bufferFullEvents = window.bufferFullEvents;
+    queue.backpressureEvents = window.backpressureEvents;
+    queue.classCount = window.classCount;
+    queue.classServiceSum = window.classServiceSum;
+    queue.classServiceSquareSum = window.classServiceSquareSum;
+
+    if (queue.packetCount != 0) {
+        queue.serviceMean = static_cast<double>(
+            queue.serviceSum / queue.packetCount);
+        queue.serviceSecondMoment = static_cast<double>(
+            queue.serviceSquareSum / queue.packetCount);
+        if (queue.serviceMean > 0.0) {
+            queue.cs2 = std::max(0.0, queue.serviceSecondMoment /
+                (queue.serviceMean * queue.serviceMean) - 1.0);
+        }
+    }
+    queue.utilization = static_cast<double>(queue.serviceSum) /
+        static_cast<double>(profileInterval);
+
+    queue.observedWait = queue.observedWaitSamples == 0 ? 0.0 :
+        static_cast<double>(queue.observedWaitSum /
+                            queue.observedWaitSamples);
+}
+
+void
+UACCController::updateFeedback(QueueState &queue)
+{
+    if (queue.packetCount < minArrivalSamples)
+        return;
+
+    const QueueCost model = modelQueueCost(queue, observedTraffic(queue),
+                                           false);
+    const double observedCost = static_cast<double>(queue.observedWaitSum);
+    double raw = 1.0;
+    if (!std::isfinite(model.cost) || model.cost <= 1e-12)
+        raw = observedCost > 1e-12 ? feedbackBetaMax : 1.0;
+    else
+        raw = std::clamp(observedCost / model.cost, 1.0,
+                         feedbackBetaMax);
+
+    const double shift = std::ldexp(1.0,
+        std::min<unsigned>(feedbackEwmaShift, 30));
+    queue.feedbackBeta += (raw - queue.feedbackBeta) / shift;
+    queue.feedbackBeta = std::clamp(queue.feedbackBeta, 1.0,
+                                    feedbackBetaMax);
+}
+
+UACCController::TrafficSums
+UACCController::observedTraffic(const QueueState &queue) const
+{
+    return TrafficSums{
+        static_cast<double>(queue.packetCount),
+        static_cast<double>(queue.serviceSum),
+        static_cast<double>(queue.serviceSquareSum)};
+}
+
+UACCController::TrafficSums
+UACCController::trafficFor(unsigned coreId, unsigned ways,
+                            QueueDirection direction) const
+{
+    if (coreId >= cores.size() || ways == 0)
+        return {};
+
+    const auto &core = cores[coreId];
+    const double misses = static_cast<double>(core.localMisses);
+    const double hitCount = std::min(
+        misses, static_cast<double>(histogramCount(
+            core, baseWays, baseWays + ways)));
+    const auto &queue = queueState(coreId, direction);
+    const double ticksPerCycle = d2dBandwidth /
+        std::max(1.0, static_cast<double>(clockPeriod()));
+    const double requestFallback = std::max(1.0,
+        static_cast<double>(requestSize) * ticksPerCycle);
+    const double responseFallback = std::max(1.0,
+        static_cast<double>(cacheLineSize) * ticksPerCycle);
+
+    auto classMean = [&](UACCRequestExtension::QueueClass cls,
+                         double fallback) {
+        const unsigned id = static_cast<unsigned>(cls);
+        if (queue.classCount[id] == 0)
+            return fallback;
+        const double measured = static_cast<double>(
+            queue.classServiceSum[id] / queue.classCount[id]);
+        return measured > 0.0 ? measured : fallback;
+    };
+    auto classSecond = [&](UACCRequestExtension::QueueClass cls,
+                           double fallback) {
+        const unsigned id = static_cast<unsigned>(cls);
+        if (queue.classCount[id] == 0)
+            return fallback * fallback;
+        const double measured = static_cast<double>(
+            queue.classServiceSquareSum[id] / queue.classCount[id]);
+        return measured > 0.0 ? measured : fallback * fallback;
+    };
+    TrafficSums result;
+    auto add = [&](double count, double service, double second) {
+        result.count += count;
+        result.busy += count * service;
+        result.busySquare += count * second;
+    };
+
+    if (direction == QueueDirection::Request) {
+        add(misses, classMean(UACCRequestExtension::QueueClass::Request,
+                              requestFallback),
+            classSecond(UACCRequestExtension::QueueClass::Request,
+                        requestFallback));
+        const unsigned wb = static_cast<unsigned>(
+            UACCRequestExtension::QueueClass::Writeback);
+        add(queue.classCount[wb],
+            classMean(UACCRequestExtension::QueueClass::Writeback,
+                      responseFallback),
+            classSecond(UACCRequestExtension::QueueClass::Writeback,
+                        responseFallback));
+    } else {
+        add(hitCount,
+            classMean(UACCRequestExtension::QueueClass::HitResponse,
+                      responseFallback),
+            classSecond(UACCRequestExtension::QueueClass::HitResponse,
+                        responseFallback));
+        add(misses - hitCount,
+            classMean(UACCRequestExtension::QueueClass::MissResponse,
+                      responseFallback),
+            classSecond(UACCRequestExtension::QueueClass::MissResponse,
+                        responseFallback));
+    }
+    return result;
+}
+
+UACCController::QueueCost
+UACCController::modelQueueCost(const QueueState &queue,
+                               const TrafficSums &traffic,
+                               bool useFeedback) const
+{
+    if (traffic.count <= 0.0 || traffic.busy <= 0.0)
+        return {};
+
+    const double window = static_cast<double>(profileInterval);
+    const double utilization = traffic.busy / window;
+    const double slack = window - traffic.busy;
+    QueueCost result;
+    result.utilization = utilization;
+    result.valid = utilization < rhoMax;
+    if (!result.valid || slack <= 0.0)
+        return {std::numeric_limits<double>::infinity(),
+                std::numeric_limits<double>::infinity(), utilization, false};
+
+    const double ca2 = std::max(1.0, queue.ca2Ewma);
+    if (queueModel == "gg1" || queueModel == "gg1-feedback") {
+        const double serviceMean = traffic.busy / traffic.count;
+        const double cs2 = serviceMean > 0.0 ? std::max(0.0,
+            traffic.busySquare / traffic.count /
+            (serviceMean * serviceMean) - 1.0) : 0.0;
+        result.wait = utilization / (1.0 - utilization) *
+            (ca2 + cs2) / 2.0 * serviceMean;
+        result.cost = traffic.count * result.wait;
+    } else {
+        // Section 14: direct window-count implementation.  This is kept as
+        // a separate path so the engineering datapath is exercised directly,
+        // even though it is algebraically equivalent to the moment form.
+        result.cost = uacc::section14QueueCost(
+            traffic.count, traffic.busy, traffic.busySquare, ca2, window);
+        result.wait = result.cost / traffic.count;
+    }
+
+    if (useFeedback)
+        result.cost *= queue.feedbackBeta;
+    result.wait = result.cost / traffic.count;
+    return result;
+}
+
+UACCController::QueueCost
+UACCController::legacyQueueCost(double packetCount) const
+{
+    if (packetCount <= 0.0)
+        return {};
+    const double intervalSeconds = static_cast<double>(profileInterval) *
+        clockPeriod() / sim_clock::as_float::s;
+    const double lambda = packetCount * responseFlits /
+        std::max(intervalSeconds, 1e-30);
+    const double wait = queueWaitCycles(lambda);
+    return {packetCount * wait, wait, 0.0, std::isfinite(wait)};
+}
+
+double
+UACCController::fixedCost(const std::vector<unsigned> &allocation) const
+{
+    if (queueModel == "mg1")
+        return 0.0;
+
+    double packets = 0.0;
+    for (unsigned coreId = 0; coreId < numCores; ++coreId) {
+        if (coreId >= allocation.size() || allocation[coreId] == 0)
+            continue;
+        const double missCount = cores[coreId].localMisses;
+        const double writebacks = cores[coreId].queues[
+            static_cast<unsigned>(QueueDirection::Request)].classCount[
+            static_cast<unsigned>(UACCRequestExtension::QueueClass::Writeback)];
+        packets += 2.0 * missCount + writebacks;
+    }
+    const double oneWayFixed = static_cast<double>(d2dRtt) /
+        std::max(1.0, static_cast<double>(clockPeriod())) / 2.0;
+    return packets * oneWayFixed;
+}
+
+bool
+UACCController::queueCongested(const QueueState &queue) const
+{
+    return queue.utilization >= rhoMax ||
+        (queueOccupancyThreshold != 0 &&
+         queue.queueOccupancyMax > queueOccupancyThreshold) ||
+        (backpressureThreshold != 0 &&
+         (queue.backpressureEvents + queue.bufferFullEvents) >
+             backpressureThreshold);
+}
+
+double
+UACCController::totalQueueCost(const std::vector<unsigned> &allocation,
+                                bool useFeedback, bool *valid) const
+{
+    bool allValid = true;
+    double total = 0.0;
+    if (queueModel == "mg1") {
+        double packetCount = 0.0;
+        for (unsigned coreId = 0; coreId < numCores; ++coreId) {
+            if (coreId < allocation.size() && allocation[coreId] != 0)
+                packetCount += cores[coreId].localMisses;
+        }
+        const QueueCost cost = legacyQueueCost(packetCount);
+        if (!cost.valid)
+            allValid = false;
+        total = cost.cost;
+    } else {
+        for (unsigned coreId = 0; coreId < numCores; ++coreId) {
+            for (const auto direction : {QueueDirection::Request,
+                                         QueueDirection::Response}) {
+                const auto &queue = queueState(coreId, direction);
+                const QueueCost cost = modelQueueCost(
+                    queue, trafficFor(coreId,
+                        coreId < allocation.size() ? allocation[coreId] : 0,
+                        direction), useFeedback);
+                if (queueOccupancyThreshold != 0 &&
+                    queue.queueOccupancyMax > queueOccupancyThreshold)
+                    allValid = false;
+                if (backpressureThreshold != 0 &&
+                    queue.backpressureEvents + queue.bufferFullEvents >
+                        backpressureThreshold)
+                    allValid = false;
+                if (!cost.valid)
+                    allValid = false;
+                total += cost.cost;
+            }
+        }
+    }
+    if (valid)
+        *valid = allValid;
+    return total;
+}
+
+double
+UACCController::capacityGain(const std::vector<unsigned> &allocation) const
+{
+    double gain = 0.0;
+    for (unsigned coreId = 0; coreId < numCores; ++coreId) {
+        if (coreId >= allocation.size())
+            continue;
+        const auto &core = cores[coreId];
+        const unsigned ways = allocation[coreId];
+        const double hits = histogramCount(core, baseWays,
+                                           baseWays + ways);
+        const double distance = coreId < distanceNs.size() ?
+            distanceNs[coreId] : 0.0;
+        const double discount = allocationPolicy == "greedy" ? 1.0 :
+            std::max(0.0, 1.0 - distance * distanceDiscountPerNs);
+        gain += hits * lowerMissPenalty * discount;
+    }
+    return gain;
+}
+
 void
 UACCController::profileTick()
 {
@@ -255,71 +712,107 @@ UACCController::runAllocator()
     if (allocationPolicy == "static")
         return;
 
-    std::vector<unsigned> next(numCores, 0);
-    std::vector<double> utilities(numCores, 0.0);
-
-    for (unsigned coreId = 0; coreId < numCores; ++coreId) {
-        DPRINTF(UACC, "allocator core %u: misses=%llu hist[0]=%llu "
-                "hist[1]=%llu hist[2]=%llu\n", coreId,
-                cores[coreId].localMisses,
-                cores[coreId].reuseHistogram.size() > 0 ?
-                    cores[coreId].reuseHistogram[0] : 0,
-                cores[coreId].reuseHistogram.size() > 1 ?
-                    cores[coreId].reuseHistogram[1] : 0,
-                cores[coreId].reuseHistogram.size() > 2 ?
-                    cores[coreId].reuseHistogram[2] : 0);
+    const uint64_t currentWindow = queueWindowIndex(curTick());
+    // Give deferred cache/selector completion callbacks one full profiling
+    // window to arrive.  Samples are still assigned by enqueue window, so a
+    // response crossing a boundary cannot affect the newer window.
+    bool contract = false;
+    if (currentWindow >= 2) {
+        const uint64_t lastCompleteWindow = currentWindow - 2;
+        for (auto &core : cores) {
+            for (auto &queue : core.queues) {
+                auto it = queue.pendingWindows.begin();
+                while (it != queue.pendingWindows.end() &&
+                       it->first <= lastCompleteWindow) {
+                    updateQueueState(queue, it->second);
+                    queue.haveProcessedWindow = true;
+                    queue.processedWindow = it->first;
+                    if (queueModel != "mg1")
+                        updateFeedback(queue);
+                    if (queueCongested(queue))
+                        ++queue.congestionWindows;
+                    else
+                        queue.congestionWindows = 0;
+                    contract |=
+                        queue.congestionWindows >= contractionWindows;
+                    it = queue.pendingWindows.erase(it);
+                }
+            }
+        }
     }
 
-    const double intervalSeconds =
-        static_cast<double>(profileInterval) * clockPeriod() /
-        sim_clock::as_float::s;
-    const double safeInterval = std::max(intervalSeconds, 1e-30);
-    double lambda = 0.0;
-    for (const auto &core : cores)
-        lambda += core.remoteLookups * responseFlits / safeInterval;
+    std::vector<unsigned> next = allocations;
+    std::vector<double> utilities(numCores, 0.0);
+    unsigned allocated = std::accumulate(next.begin(), next.end(), 0u);
+    const bool useFeedback = queueModel == "gg1-feedback" ||
+        queueModel == "section14" || queueModel == "section14-feedback";
 
-    unsigned allocated = 0;
-    while (allocated < maxRemoteWays) {
+    if (contract && allocated != 0) {
+        unsigned contractCore = numCores;
+        double lowestBenefit = std::numeric_limits<double>::infinity();
+        for (unsigned coreId = 0; coreId < numCores; ++coreId) {
+            if (next[coreId] == 0)
+                continue;
+            std::vector<unsigned> smaller = next;
+            --smaller[coreId];
+            const double benefit = capacityGain(next) -
+                capacityGain(smaller);
+            if (benefit < lowestBenefit) {
+                lowestBenefit = benefit;
+                contractCore = coreId;
+            }
+        }
+        if (contractCore != numCores) {
+            --next[contractCore];
+            --allocated;
+            DPRINTF(UACC, "allocator model=%s contracted core %u to %u "
+                    "after %u congested windows\n", queueModel,
+                    contractCore, next[contractCore], contractionWindows);
+        }
+    } else while (allocated < maxRemoteWays) {
+        double bestScore = 0.0;
         double bestUtility = 0.0;
         unsigned bestCore = numCores;
+        unsigned bestDelta = 0;
 
         for (unsigned coreId = 0; coreId < numCores; ++coreId) {
             const auto &state = cores[coreId];
-            if (state.localMisses == 0 || next[coreId] >= maxRemoteWays)
+            if (state.localMisses == 0)
                 continue;
 
             for (const unsigned delta : lookaheadDeltas) {
-                if (delta == 0 || allocated + delta > maxRemoteWays)
+                if (delta == 0 || allocated + delta > maxRemoteWays ||
+                    next[coreId] + delta > maxRemoteWays)
                     continue;
 
-                const unsigned current = next[coreId];
-                const double missReduction = static_cast<double>(
-                    histogramCount(state, baseWays + current,
-                                   baseWays + current + delta)) /
-                    state.localMisses;
-                const double distance = coreId < distanceNs.size() ?
-                    distanceNs[coreId] : 0.0;
-                const double discount = allocationPolicy == "greedy" ? 1.0 :
-                    std::max(0.0, 1.0 - distance * distanceDiscountPerNs);
-                const double gain = missReduction * lowerMissPenalty *
-                    discount;
+                std::vector<unsigned> candidate = next;
+                candidate[coreId] += delta;
 
-                const double oldRemote = remoteProbability(state, current);
-                const double newRemote = remoteProbability(state,
-                                                            current + delta);
-                const double missRate = state.localMisses / safeInterval;
-                const double deltaLambda =
-                    missRate * (newRemote - oldRemote) * responseFlits;
-                const double congestion =
-                    allocationPolicy == "greedy" ||
-                    allocationPolicy == "distance" ? 0.0 :
-                    queueWaitCycles(lambda + deltaLambda) -
-                    queueWaitCycles(lambda);
-                const double utility = gain - congestion;
+                bool currentValid = true;
+                bool candidateValid = true;
+                const double currentQueue = totalQueueCost(
+                    next, useFeedback, &currentValid);
+                const double candidateQueue = totalQueueCost(
+                    candidate, useFeedback, &candidateValid);
+                const double currentFixed = fixedCost(next);
+                const double candidateFixed = fixedCost(candidate);
+                const double gain = capacityGain(candidate) -
+                    capacityGain(next);
+                const bool congestionEnabled = allocationPolicy ==
+                    "congestion";
+                const double queueDelta = congestionEnabled ?
+                    candidateQueue - currentQueue : 0.0;
+                const double fixedDelta = congestionEnabled ?
+                    candidateFixed - currentFixed : 0.0;
+                const double utility = gain - fixedDelta - queueDelta;
+                const double score = utility / delta;
 
-                if (utility > bestUtility) {
+                if (currentValid && candidateValid &&
+                    std::isfinite(score) && score > bestScore) {
+                    bestScore = score;
                     bestUtility = utility;
                     bestCore = coreId;
+                    bestDelta = delta;
                 }
             }
         }
@@ -331,14 +824,42 @@ UACCController::runAllocator()
         ++allocated;
         utilities[bestCore] = bestUtility;
 
-        DPRINTF(UACC, "allocator selected core %u utility=%f ways=%u\n",
-                bestCore, bestUtility, next[bestCore]);
+        DPRINTF(UACC, "allocator model=%s selected core %u utility=%f "
+                "score=%f lookahead=%u ways=%u\n", queueModel,
+                bestCore, bestUtility, bestScore, bestDelta,
+                next[bestCore]);
+    }
 
-        const auto &state = cores[bestCore];
-        const double oldRemote = remoteProbability(state, next[bestCore] - 1);
-        const double newRemote = remoteProbability(state, next[bestCore]);
-        lambda += state.localMisses / safeInterval *
-            (newRemote - oldRemote) * responseFlits;
+    for (unsigned coreId = 0; coreId < numCores; ++coreId) {
+        for (unsigned direction = 0; direction < 2; ++direction) {
+            auto &queue = cores[coreId].queues[direction];
+            const auto candidateTraffic = trafficFor(
+                coreId, next[coreId], static_cast<QueueDirection>(direction));
+            QueueCost predicted;
+            if (queueModel == "mg1") {
+                double remotePackets = 0.0;
+                for (unsigned candidateCore = 0;
+                     candidateCore < numCores; ++candidateCore) {
+                    if (next[candidateCore] != 0)
+                        remotePackets += cores[candidateCore].localMisses;
+                }
+                predicted = legacyQueueCost(remotePackets);
+            } else {
+                predicted = modelQueueCost(queue, candidateTraffic,
+                                           useFeedback);
+            }
+            const unsigned index = coreId * 2 + direction;
+            stats.queuePackets[index] = queue.packetCount;
+            stats.queueCA2[index] = std::max(1.0, queue.ca2Ewma);
+            stats.queueCS2[index] = queue.cs2;
+            stats.queueUtilization[index] = queue.utilization;
+            stats.queueObservedWait[index] = queue.observedWait;
+            stats.queuePredictedWait[index] = predicted.wait;
+            stats.queueFeedback[index] = queue.feedbackBeta;
+            stats.queueBackpressure[index] = queue.backpressureEvents +
+                queue.bufferFullEvents;
+            stats.queueOccupancy[index] = queue.queueOccupancyMax;
+        }
     }
 
     applyAllocation(next, utilities);

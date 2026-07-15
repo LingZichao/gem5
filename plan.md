@@ -2,7 +2,13 @@
 
 ## Summary
 
-当前状态：已完成一个可运行、可验证的 classic-timing UACC MVP。实现覆盖远端 cache、按核容量 partition、静态/动态 allocation、基础 D2D 参数化模型，以及 host-side line store 与 remote cache 的 atomic line swap 语义。它还不是论文 Figure 4 的硬件级完整实现，也不声称已经完成 Ruby/Garnet、真实 CPU hierarchy 或完整 burst-aware G/G/1 predictor。
+当前状态：已完成可运行、可验证的 classic-timing UACC MVP，并将 model.md 的
+G/G/1+feedback 和 Section 14 direct queue-cost 两条路径接入 gem5
+`UACCController`。实现覆盖远端 cache、按核容量 partition、静态/动态
+allocation、真实 `SerialLink` request/response queue 观测，以及 host-side
+line store 与 remote cache 的 atomic line swap 语义。它还不是论文 Figure 4
+的硬件级完整实现，也不声称已经完成 Ruby/Garnet、真实 CPU hierarchy 或
+共享 xbar 的独立 observer。
 
 已阅读 [acm-sigconf.pdf](/home/ling/gem5/acm-sigconf.pdf)。论文核心包括：
 
@@ -111,14 +117,10 @@ utility = capacity_gain - queue_penalty
 
 当前代码中的实现是基于 aggregate lambda、RTT 和 serialization ticks 的简化 queue-wait 估计；文档中的 $C_A^2$、$C_S^2$、per-link observer、EWMA 和 measured feedback 尚未接入 `UACCController`。
 
-其中：
-
-```text
-S = max(RTT, cacheline_bits / bandwidth)
-W(lambda) = lambda × S² / (2 × (1 - lambda × S))
-```
-
-当利用率接近 1 时，将候选视为不可接受。算法每次评估多 way lookahead，但只提交一个 way；约束 `sum(allocation) <= max_remote_ways`。
+当前实现将 `mg1` 保留为 legacy 对照；`gg1-feedback` 和 `section14` 使用
+真实 request/response queue moments、pending enqueue-window buckets、反馈和
+拥塞 guard。算法每次评估多 way lookahead，但只提交一个 way；约束
+`sum(allocation) <= max_remote_ways`。
 
 容量缩小时：
 
@@ -155,6 +157,11 @@ W(lambda) = lambda × S² / (2 × (1 - lambda × S))
 - atomic-swap mixed read/write：8 次 remote hit、8 次 atomic line swap。
 - 两核低带宽/有限 buffer retry stress：两路 TrafficGen 分别产生 12/11 次 retry，完成 16 次 swap，无死锁。
 - dynamic congestion allocation：完成 103 个 profiling windows、93 次 allocation change。
+- gem5 queue-model smoke run：`mg1`、`gg1-feedback` 和 `section14` 均可运行；
+  新模型输出 request/response queue packet count、CA²、CS²、利用率、实测
+  wait、预测 wait、feedback beta、occupancy 和 backpressure。
+- 相同固定 cache-line 流量下，G/G/1+feedback 与 Section 14 的候选预测一致，
+  与 model.md 的代数等价关系相符；二者与 legacy M/G/1 分开可切换用于消融。
 - `configs/example/cache_partitioning.py` 基线回归通过。
 - `git diff --check`、Python 语法检查和 `python3 util/style.py -m` 通过。
 
@@ -165,7 +172,9 @@ W(lambda) = lambda × S² / (2 × (1 - lambda × S))
   - allocation 总容量约束。
   - 距离折损和拥塞惩罚的单调性。
   - ATD 重用距离统计。
-  - allocation 为 0、增加、减少时的 partition 行为。
+- allocation 为 0、增加、减少时的 partition 行为。
+- SerialLink 无 `VALID_SIZE`/无 payload packet、跨窗口 queue attribution、
+  fixed delay wait clipping、buffer-full/retry event counting。
 
 - gem5 系统测试
   - 单核基线与 UACC-disabled 结果一致。

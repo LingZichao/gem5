@@ -86,7 +86,7 @@ UACCCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
         unsigned coreId = 0;
         if (extension)
             coreId = extension->core_id;
-        controller->recordRemoteAccess(coreId, hit);
+        controller->recordRemoteAccess(coreId, hit, pkt);
     }
 
     return hit;

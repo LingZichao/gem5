@@ -63,6 +63,9 @@ class UACCController(ClockedObject):
     d2d_bandwidth = Param.MemoryBandwidth(
         "128GiB/s", "D2D payload bandwidth; internally ticks per byte"
     )
+    request_size = Param.Unsigned(
+        16, "Configured remote request payload size in bytes"
+    )
     response_flits = Param.Unsigned(1, "D2D flits per cache response")
     allocation_policy = Param.String(
         "congestion", "static, greedy, distance, or congestion"
@@ -72,6 +75,34 @@ class UACCController(ClockedObject):
     )
     dynamic_allocation = Param.Bool(
         True, "Periodically recompute the allocation"
+    )
+    queue_model = Param.String(
+        "mg1",
+        "Queue model: mg1, gg1-feedback, or section14",
+    )
+    min_arrival_samples = Param.Unsigned(
+        32, "Minimum arrivals before replacing queue moments"
+    )
+    ca2_ewma_shift = Param.Unsigned(
+        2, "Right-shift exponent for the burstiness EWMA"
+    )
+    feedback_ewma_shift = Param.Unsigned(
+        2, "Right-shift exponent for the queue feedback EWMA"
+    )
+    feedback_beta_max = Param.Float(
+        4.0, "Maximum measured queue feedback multiplier"
+    )
+    rho_max = Param.Float(
+        0.90, "Maximum candidate queue utilization"
+    )
+    queue_occupancy_threshold = Param.Unsigned(
+        0, "Maximum allowed observed queue occupancy; zero disables the guard"
+    )
+    backpressure_threshold = Param.Unsigned(
+        0, "Maximum allowed per-window backpressure events; zero disables the guard"
+    )
+    contraction_windows = Param.Unsigned(
+        3, "Consecutive congested windows before contracting one way"
     )
     partition_manager = Param.UACCPartitionManager(
         NULL, "Partition manager for the remote cache"

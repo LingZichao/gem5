@@ -395,6 +395,18 @@ if measured congestion remains high for multiple windows:
 
 观测必须位于真实排队点。只在 `UACCController` 接收到逻辑访问事件时记录，无法得到真实等待时间。
 
+当前 classic-timing 落地已在 `SerialLink` 的请求/响应 deferred queue 中记录
+这些字段，并通过 `UACCRequestExtension` 回传给 `UACCController`。每个核心的
+请求方向和响应方向分别作为 queueing domain；控制器不会把独立 SerialLink
+错误合并成一条全局链路。UACC 共享 `NoncoherentXBar` 仍由实际 retry/occupancy
+统计反映，尚未改造成独立的 xbar observer。
+
+由于 queue 样本在 cache/selector 完成阶段回传，控制器按 packet 的实际
+`enqueue` tick 放入 pending window bucket；因此跨 profiling boundary 的完成
+事件归属于到达窗口，而不会把后续窗口的 trace 泄漏到当前候选。上一窗口的
+interarrival continuity 保存在 queue domain 状态中；空窗口或样本不足时保留
+上一轮 CA²、service moments 和 feedback。
+
 ### 8.2 `UACCController`
 
 每个 queueing domain 保存：
@@ -421,6 +433,20 @@ queue_occupancy_threshold
 backpressure_threshold
 contraction_windows
 ```
+
+上述 moment、EWMA、feedback、利用率 guard 和 occupancy/backpressure guard 已
+接入 `UACCController`。运行时通过 `queue_model` 选择：
+
+```text
+mg1             legacy aggregate-lambda RTT/serialization model
+gg1-feedback    Kingman G/G/1 moments + measured beta feedback
+section14       direct window-count formula + measured beta feedback
+```
+
+`contraction_windows` 个连续拥塞窗口会触发最低边际容量收益核心收缩一个
+way；后续窗口仍运行同一正效用扩容循环，因此收缩后的容量可以在拥塞消退后
+重新分配。buffer-full 和 request/response downstream retry 都按事件计数，
+并参与有效性 guard。
 
 ### 8.3 拓扑一致性
 
@@ -516,6 +542,10 @@ $u_t$ 表示低估程度。低等待时间窗口同时报告绝对 cycle error�
 5. 模型、feedback 和 oracle 消融对比。
 
 实验启动前必须先解决拓扑统计归属和真实排队观测点，否则后续结果没有解释力。
+
+当前 `configs/example/uacc.py` 通过 `--uacc-queue-model` 暴露三种路径；
+`--uacc-policy congestion` 才会使用相应 queue cost，`static`、`greedy` 和
+`distance` 保留原有策略语义。
 
 ## 10. 投稿前判断标准
 
@@ -677,6 +707,10 @@ writeback_count     = measured or separately predicted writebacks
 ~~~
 
 从 0 way 增加到 1 way 时，必须计入 remote-lookup activation cost。
+工程实现分别累计 request、hit response、miss response 和 writeback class；
+候选流量用这些 class 的 `R0/R1/R2` 相加。无观测样本时，request 使用配置的
+`request_size` 服务 fallback，response/writeback 使用 cache-line fallback，
+不会把较小 request 强行当作完整 cache line。
 
 ### 14.4 直接 queue-cost
 
@@ -879,6 +913,11 @@ at window boundary:
 - util/uacc_gg1_sim.py：rate-direct 和 window-count direct；
 - util/compare_uacc_models.py：窗口级、多 seed allocation equivalence；
 - tests/pyunit/uacc/pyunit_gg1_sim.py：公式与因果 allocation 单测。
+- src/mem/serial_link.cc：真实请求/响应 queue 的 enqueue、service-start、
+  serialization busy time、occupancy 和 buffer-full 观测；
+- src/mem/uacc/uacc_controller.cc：gem5 在线 G/G/1+feedback 和 Section 14
+  allocator datapath；
+- configs/example/uacc.py：`--uacc-queue-model mg1|gg1-feedback|section14`。
 
 验证结果：
 
@@ -908,3 +947,11 @@ $$
 $$
 
 因此，window-count direct 公式是最终工程实现路径。在理想算术下没有观察到 prediction、objective 或 allocation 损失。尚未量化的误差只包括 Q-format、取整、饱和位宽和 reciprocal approximation。
+
+gem5 classic-timing smoke validation also confirms that all three queue models
+complete the same remote-cache and atomic-swap scenarios without a retry
+deadlock. The Section 14 and G/G/1 paths report the same candidate wait on
+fixed-size cache-line traffic, as expected from the algebraic equivalence of
+their queue-cost expressions; their implementation paths remain separate so
+the direct engineering datapath is exercised rather than inferred from the
+floating-point moment path.

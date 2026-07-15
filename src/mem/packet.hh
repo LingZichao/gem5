@@ -816,6 +816,9 @@ class Packet : public Printable, public Extensible<Packet>
 
     unsigned getSize() const  { assert(flags.isSet(VALID_SIZE)); return size; }
 
+    /** Whether the packet carries a valid transfer size. */
+    bool hasSize() const { return flags.isSet(VALID_SIZE); }
+
     /**
      * Get address range to which this packet belongs.
      *

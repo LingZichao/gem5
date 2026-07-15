@@ -229,6 +229,8 @@ UACCSelector::sendProbe(PacketPtr original, bool remote)
 
     if (!downstream(remote).sendTimingReq(probe)) {
         cpuRetryPending = true;
+        if (remote && controller)
+            controller->recordRemoteBackpressure(coreId);
         if (!remote)
             memRetryKind = MemRetryKind::CpuRequest;
         pendingProbes.erase(probe);
@@ -485,6 +487,8 @@ UACCSelector::recvTimingReq(PacketPtr pkt)
 
     if (!downstream(remote).sendTimingReq(pkt)) {
         cpuRetryPending = true;
+        if (remote && controller)
+            controller->recordRemoteBackpressure(coreId);
         if (!remote)
             memRetryKind = MemRetryKind::CpuRequest;
         return false;
@@ -622,12 +626,20 @@ UACCSelector::tryTiming(PacketPtr pkt)
 bool
 UACCSelector::recvTimingResp(PacketPtr pkt, bool remote)
 {
-    if (atomicSwap && pendingProbes.find(pkt) != pendingProbes.end())
+    if (atomicSwap && pendingProbes.find(pkt) != pendingProbes.end()) {
+        if (remote && controller)
+            controller->recordRemoteResponse(coreId, pkt);
         return finishTimingResponse(pkt, remote);
+    }
 
-    if (cpuSidePort.sendTimingResp(pkt))
+    if (cpuSidePort.sendTimingResp(pkt)) {
+        if (remote && controller)
+            controller->recordRemoteResponse(coreId, pkt);
         return true;
+    }
 
+    if (remote && controller)
+        controller->recordRemoteResponseBackpressure(coreId);
     responseRetryRemote = remote;
     return false;
 }

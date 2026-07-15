@@ -15,4 +15,6 @@ Source('uacc_selector.cc')
 Source('uacc_cache.cc')
 Source('uacc_partition.cc')
 
+GTest('uacc_queue_model.test', 'uacc_queue_model.test.cc')
+
 DebugFlag('UACC')

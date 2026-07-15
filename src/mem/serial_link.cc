@@ -49,6 +49,7 @@
 
 #include "base/trace.hh"
 #include "debug/SerialLink.hh"
+#include "mem/uacc/uacc_extension.hh"
 #include "params/SerialLink.hh"
 
 namespace gem5
@@ -145,10 +146,25 @@ SerialLink::SerialLinkRequestPort::recvTimingResp(PacketPtr pkt)
     // first flit, but the deserializer (at the host side in this case), will
     // have to wait to receive the whole packet. So we only account for the
     // deserialization latency.
-    Cycles cycles = delay;
-    cycles += Cycles(divCeil(pkt->getSize() * 8, serial_link.num_lanes
-                * serial_link.link_speed));
-     Tick t = serial_link.clockEdge(cycles);
+    const Cycles serialization = SerialLink::serializationCycles(
+        pkt, serial_link.num_lanes, serial_link.link_speed);
+    Cycles cycles = delay + serialization;
+    Tick t = serial_link.clockEdge(cycles);
+
+    if (pkt->req) {
+        if (auto ext = pkt->req->getExtension<UACCRequestExtension>()) {
+            ext->response_queue.enqueue = curTick();
+            ext->response_queue.fixed_ticks =
+                delay * serial_link.clockPeriod();
+            ext->response_queue.service_ticks =
+                serialization * serial_link.clockPeriod();
+            ext->response_queue.occupancy = transmitList.size() + 1;
+            ext->response_queue.queue_class = ext->remote_hit ?
+                UACCRequestExtension::QueueClass::HitResponse :
+                UACCRequestExtension::QueueClass::MissResponse;
+            ext->response_queue.valid = false;
+        }
+    }
 
     //@todo: If the processor sends two uncached requests towards HMC and the
     // second one is smaller than the first one. It may happen that the second
@@ -172,8 +188,13 @@ SerialLink::SerialLinkResponsePort::recvTimingReq(PacketPtr pkt)
     DPRINTF(SerialLink, "Response queue size: %d outresp: %d\n",
             transmitList.size(), outstandingResponses);
 
+    auto ext = pkt && pkt->req ?
+        pkt->req->getExtension<UACCRequestExtension>() : nullptr;
+
     // if the request queue is full then there is no hope
     if (mem_side_port.reqQueueFull()) {
+        if (ext)
+            ++ext->request_queue.buffer_full_events;
         DPRINTF(SerialLink, "Request queue full\n");
         retryReq = true;
     } else if ( !retryReq ) {
@@ -182,6 +203,8 @@ SerialLink::SerialLinkResponsePort::recvTimingReq(PacketPtr pkt)
             !pkt->cacheResponding();
         if (expects_response) {
             if (respQueueFull()) {
+                if (ext)
+                    ++ext->request_queue.buffer_full_events;
                 DPRINTF(SerialLink, "Response queue full\n");
                 retryReq = true;
             } else {
@@ -206,10 +229,24 @@ SerialLink::SerialLinkResponsePort::recvTimingReq(PacketPtr pkt)
             // to check its integrity first. So everytime a packet crosses a
             // serial link, we should account for its deserialization latency
             // only.
-            Cycles cycles = delay;
-            cycles += Cycles(divCeil(pkt->getSize() * 8,
-                    serial_link.num_lanes * serial_link.link_speed));
+            const Cycles serialization = SerialLink::serializationCycles(
+                pkt, serial_link.num_lanes, serial_link.link_speed);
+            Cycles cycles = delay + serialization;
             Tick t = serial_link.clockEdge(cycles);
+
+            if (ext) {
+                ext->request_queue.enqueue = curTick();
+                ext->request_queue.fixed_ticks =
+                    delay * serial_link.clockPeriod();
+                ext->request_queue.service_ticks =
+                    serialization * serial_link.clockPeriod();
+                ext->request_queue.occupancy =
+                    mem_side_port.reqQueueSize() + 1;
+                ext->request_queue.queue_class = pkt->isWriteback() ?
+                    UACCRequestExtension::QueueClass::Writeback :
+                    UACCRequestExtension::QueueClass::Request;
+                ext->request_queue.valid = false;
+            }
 
             //@todo: If the processor sends two uncached requests towards HMC
             // and the second one is smaller than the first one. It may happen
@@ -278,6 +315,18 @@ SerialLink::SerialLinkRequestPort::trySendTiming()
     assert(req.tick <= curTick());
 
     PacketPtr pkt = req.pkt;
+    const Cycles serialization = SerialLink::serializationCycles(
+        pkt, serial_link.num_lanes, serial_link.link_speed);
+    auto request_ext = pkt && pkt->req ?
+        pkt->req->getExtension<UACCRequestExtension>() : nullptr;
+    const Tick serviceStart = request_ext && curTick() >=
+        request_ext->request_queue.service_ticks ?
+        curTick() - request_ext->request_queue.service_ticks : 0;
+
+    if (request_ext) {
+        request_ext->request_queue.service_start = serviceStart;
+        request_ext->request_queue.valid = true;
+    }
 
     DPRINTF(SerialLink, "trySend request addr 0x%x, queue size %d\n",
             pkt->getAddr(), transmitList.size());
@@ -294,9 +343,7 @@ SerialLink::SerialLinkRequestPort::trySendTiming()
             DPRINTF(SerialLink, "Scheduling next send\n");
 
             // Make sure bandwidth limitation is met
-            Cycles cycles = Cycles(divCeil(pkt->getSize() * 8,
-                serial_link.num_lanes * serial_link.link_speed));
-            Tick t = serial_link.clockEdge(cycles);
+            Tick t = serial_link.clockEdge(serialization);
             serial_link.schedule(sendEvent, std::max(next_req.tick, t));
         }
 
@@ -321,6 +368,18 @@ SerialLink::SerialLinkResponsePort::trySendTiming()
     assert(resp.tick <= curTick());
 
     PacketPtr pkt = resp.pkt;
+    const Cycles serialization = SerialLink::serializationCycles(
+        pkt, serial_link.num_lanes, serial_link.link_speed);
+    auto response_ext = pkt && pkt->req ?
+        pkt->req->getExtension<UACCRequestExtension>() : nullptr;
+    const Tick serviceStart = response_ext && curTick() >=
+        response_ext->response_queue.service_ticks ?
+        curTick() - response_ext->response_queue.service_ticks : 0;
+
+    if (response_ext) {
+        response_ext->response_queue.service_start = serviceStart;
+        response_ext->response_queue.valid = true;
+    }
 
     DPRINTF(SerialLink, "trySend response addr 0x%x, outstanding %d\n",
             pkt->getAddr(), outstandingResponses);
@@ -339,9 +398,7 @@ SerialLink::SerialLinkResponsePort::trySendTiming()
             DPRINTF(SerialLink, "Scheduling next send\n");
 
             // Make sure bandwidth limitation is met
-            Cycles cycles = Cycles(divCeil(pkt->getSize() * 8,
-                serial_link.num_lanes * serial_link.link_speed));
-            Tick t = serial_link.clockEdge(cycles);
+            Tick t = serial_link.clockEdge(serialization);
             serial_link.schedule(sendEvent, std::max(next_resp.tick, t));
         }
 

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "base/extensible.hh"
+#include "base/types.hh"
 #include "mem/request.hh"
 
 namespace gem5
@@ -14,6 +15,28 @@ namespace gem5
 class UACCRequestExtension : public Extension<Request, UACCRequestExtension>
 {
   public:
+    enum class QueueClass : uint8_t
+    {
+        Request = 0,
+        HitResponse,
+        MissResponse,
+        Writeback,
+        Other,
+        Count,
+    };
+
+    struct QueueTiming
+    {
+        Tick enqueue = 0;
+        Tick service_start = 0;
+        Tick service_ticks = 0;
+        Tick fixed_ticks = 0;
+        unsigned occupancy = 0;
+        bool valid = false;
+        QueueClass queue_class = QueueClass::Other;
+        uint64_t buffer_full_events = 0;
+    };
+
     explicit UACCRequestExtension(unsigned _core_id = 0) : core_id(_core_id)
     {}
 
@@ -40,6 +63,11 @@ class UACCRequestExtension : public Extension<Request, UACCRequestExtension>
     bool swap_applied = false;
     bool remote_dirty = false;
     bool remote_writable = true;
+
+    // Filled by SerialLink at the actual request and response queueing
+    // points.  The two directions are separate queueing domains.
+    QueueTiming request_queue;
+    QueueTiming response_queue;
 };
 
 } // namespace gem5
