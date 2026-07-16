@@ -1,0 +1,329 @@
+{
+  "experiment": {
+    "seeds": 10000,
+    "duration": 100000,
+    "fixed_format": "Q4.4",
+    "rho_precision_is_independent": true,
+    "reciprocal": "HLS Q16 LUT plus one Newton step",
+    "workload": "diverse",
+    "profiles": "implementation"
+  },
+  "profile_definitions": {
+    "controlled_constants": {
+      "factor_and_cost_fractional_format": "Q4.4",
+      "utilization_format": "Q1.8",
+      "reciprocal": "R16",
+      "algorithm": "unchanged",
+      "physical_constraints": "unchanged"
+    },
+    "primary_width_variables": {
+      "count_and_window": [
+        "count_bits",
+        "window_bits"
+      ],
+      "traffic_sums": [
+        "busy_sum_bits",
+        "service_second_sum_bits"
+      ],
+      "cost_chain": [
+        "cost_integer_bits",
+        "total_cost_integer_bits",
+        "score_integer_bits"
+      ],
+      "shared_divider": [
+        "shared_divider_integer_bits"
+      ]
+    },
+    "profiles": {
+      "Lossy16-Q4.4-R16-trunc": {
+        "meaning": "Deliberately unsafe 100K failure point; only R1/R2 and the cost-to-score chain are aggressively narrowed.",
+        "supported": false,
+        "note": "Lossy16 is not a uniform 16-bit design: count/window are 17 bits, R2 is 20 bits, and the divider is 51 bits."
+      },
+      "W100K-Q4.4-R16-trunc": {
+        "meaning": "Coherent minimum-range implementation for at most 100K cycles and packets per domain.",
+        "supported": true,
+        "note": "Recommended for the current 100K profiling window."
+      },
+      "W1M-Q4.4-R16-trunc": {
+        "meaning": "Coherent conservative implementation for at most 1M cycles and packets per domain.",
+        "supported": true,
+        "note": "Evaluated with the same 100K workload; W1M denotes supported range, not the measurement duration."
+      },
+      "legacy-wide-Q4.4-R16-trunc": {
+        "meaning": "Original over-wide prototype types retained as the controlled area baseline.",
+        "supported": true,
+        "note": "Uses the same Q4.4/Q1.8/R16 algorithm."
+      }
+    }
+  },
+  "results": [
+    {
+      "format": "Lossy16-Q4.4-R16-trunc",
+      "bounds": {
+        "max_window_cycles": 100000,
+        "max_packets_per_domain": 100000,
+        "max_domains": 8,
+        "max_service_cycles": 32,
+        "max_wait_cycles": 4096,
+        "max_fixed_latency_cycles": 512,
+        "max_gain_cycles_per_packet": 512,
+        "ca2_max": 8,
+        "beta_max": 4,
+        "rho_numerator": 9,
+        "rho_denominator": 10
+      },
+      "fractional_bits": 4,
+      "rho_fractional_bits": 8,
+      "reciprocal_bits": 16,
+      "rounding": "truncate",
+      "widths": {
+        "count_bits": 17,
+        "window_bits": 17,
+        "arrival_sum_bits": 18,
+        "arrival_square_sum_bits": 35,
+        "wait_sum_bits": 29,
+        "service_bits": 6,
+        "service_square_bits": 11,
+        "busy_sum_bits": 16,
+        "service_second_sum_bits": 20,
+        "fixed_latency_integer_bits": 10,
+        "cost_integer_bits": 20,
+        "total_cost_integer_bits": 23,
+        "score_integer_bits": 24,
+        "ca2_dividend_integer_bits": 51,
+        "ca2_divisor_bits": 36,
+        "feedback_dividend_integer_bits": 29,
+        "shared_divider_integer_bits": 51
+      },
+      "seeds": 10000,
+      "allocation_agreement_pct": 74.41,
+      "mismatches": 2559,
+      "candidate_objective_mae": 1344.3432211808615,
+      "candidate_objective_p99": 10553.52951053495,
+      "max_candidate_objective_error": 32782.63929545472,
+      "mean_oracle_regret": 59200.27644122235,
+      "max_oracle_regret": 950207.301228521,
+      "first_mismatch_seed": 1,
+      "comparison_format": "W100K-Q4.4-R16-trunc",
+      "agreement_with_comparison_pct": 74.17,
+      "first_comparison_mismatch_seed": 1,
+      "mismatch_details": {
+        "seed": 1,
+        "workload": {
+          "on_rate": 0.06116377024763719,
+          "on_mean": 134.529023017668,
+          "off_mean": 210.15478690761165,
+          "poisson_rate": 0.09760449671326626,
+          "bandwidth_bytes_per_cycle": 2.0
+        },
+        "comparison_candidate": 7,
+        "comparison_allocation": [
+          2,
+          0
+        ],
+        "selected_candidate": 1,
+        "selected_allocation": [
+          0,
+          0
+        ],
+        "comparison_candidate_sums": {
+          "r0": 4760,
+          "r1": 65688,
+          "r2": 1755488,
+          "fixed_cost": 95200,
+          "capacity_gain": 499800
+        },
+        "oracle_candidate": 7,
+        "oracle_objective_for_comparison": 175447.5750505769,
+        "oracle_objective_for_selected": 0.0,
+        "oracle_regret": 175447.5750505769
+      },
+      "saturation_counts": {
+        "r1": 47670,
+        "r2": 33450
+      }
+    },
+    {
+      "format": "W100K-Q4.4-R16-trunc",
+      "bounds": {
+        "max_window_cycles": 100000,
+        "max_packets_per_domain": 100000,
+        "max_domains": 8,
+        "max_service_cycles": 32,
+        "max_wait_cycles": 4096,
+        "max_fixed_latency_cycles": 512,
+        "max_gain_cycles_per_packet": 512,
+        "ca2_max": 8,
+        "beta_max": 4,
+        "rho_numerator": 9,
+        "rho_denominator": 10
+      },
+      "fractional_bits": 4,
+      "rho_fractional_bits": 8,
+      "reciprocal_bits": 16,
+      "rounding": "truncate",
+      "widths": {
+        "count_bits": 17,
+        "window_bits": 17,
+        "arrival_sum_bits": 18,
+        "arrival_square_sum_bits": 35,
+        "wait_sum_bits": 29,
+        "service_bits": 6,
+        "service_square_bits": 11,
+        "busy_sum_bits": 22,
+        "service_second_sum_bits": 27,
+        "fixed_latency_integer_bits": 10,
+        "cost_integer_bits": 31,
+        "total_cost_integer_bits": 34,
+        "score_integer_bits": 35,
+        "ca2_dividend_integer_bits": 51,
+        "ca2_divisor_bits": 36,
+        "feedback_dividend_integer_bits": 29,
+        "shared_divider_integer_bits": 51
+      },
+      "seeds": 10000,
+      "allocation_agreement_pct": 99.41,
+      "mismatches": 59,
+      "candidate_objective_mae": 4028.0934607681543,
+      "candidate_objective_p99": 42064.85023006634,
+      "max_candidate_objective_error": 286566.97135015856,
+      "mean_oracle_regret": 35.137231646054246,
+      "max_oracle_regret": 32627.149232729338,
+      "first_mismatch_seed": 139,
+      "comparison_format": "W100K-Q4.4-R16-trunc",
+      "agreement_with_comparison_pct": 100.0,
+      "first_comparison_mismatch_seed": null,
+      "mismatch_details": null,
+      "saturation_counts": {}
+    },
+    {
+      "format": "W1M-Q4.4-R16-trunc",
+      "bounds": {
+        "max_window_cycles": 1000000,
+        "max_packets_per_domain": 1000000,
+        "max_domains": 8,
+        "max_service_cycles": 32,
+        "max_wait_cycles": 4096,
+        "max_fixed_latency_cycles": 512,
+        "max_gain_cycles_per_packet": 512,
+        "ca2_max": 8,
+        "beta_max": 4,
+        "rho_numerator": 9,
+        "rho_denominator": 10
+      },
+      "fractional_bits": 4,
+      "rho_fractional_bits": 8,
+      "reciprocal_bits": 16,
+      "rounding": "truncate",
+      "widths": {
+        "count_bits": 20,
+        "window_bits": 20,
+        "arrival_sum_bits": 21,
+        "arrival_square_sum_bits": 41,
+        "wait_sum_bits": 32,
+        "service_bits": 6,
+        "service_square_bits": 11,
+        "busy_sum_bits": 25,
+        "service_second_sum_bits": 30,
+        "fixed_latency_integer_bits": 10,
+        "cost_integer_bits": 35,
+        "total_cost_integer_bits": 38,
+        "score_integer_bits": 39,
+        "ca2_dividend_integer_bits": 61,
+        "ca2_divisor_bits": 42,
+        "feedback_dividend_integer_bits": 32,
+        "shared_divider_integer_bits": 61
+      },
+      "seeds": 10000,
+      "allocation_agreement_pct": 99.41,
+      "mismatches": 59,
+      "candidate_objective_mae": 4028.0934607681543,
+      "candidate_objective_p99": 42064.85023006634,
+      "max_candidate_objective_error": 286566.97135015856,
+      "mean_oracle_regret": 35.137231646054246,
+      "max_oracle_regret": 32627.149232729338,
+      "first_mismatch_seed": 139,
+      "comparison_format": "W100K-Q4.4-R16-trunc",
+      "agreement_with_comparison_pct": 100.0,
+      "first_comparison_mismatch_seed": null,
+      "mismatch_details": null,
+      "saturation_counts": {}
+    },
+    {
+      "format": "legacy-wide-Q4.4-R16-trunc",
+      "bounds": {
+        "max_window_cycles": 1000000,
+        "max_packets_per_domain": 1000000,
+        "max_domains": 8,
+        "max_service_cycles": 32,
+        "max_wait_cycles": 4096,
+        "max_fixed_latency_cycles": 512,
+        "max_gain_cycles_per_packet": 512,
+        "ca2_max": 8,
+        "beta_max": 4,
+        "rho_numerator": 9,
+        "rho_denominator": 10
+      },
+      "fractional_bits": 4,
+      "rho_fractional_bits": 8,
+      "reciprocal_bits": 16,
+      "rounding": "truncate",
+      "widths": {
+        "count_bits": 32,
+        "window_bits": 40,
+        "arrival_sum_bits": 64,
+        "arrival_square_sum_bits": 96,
+        "wait_sum_bits": 64,
+        "service_bits": 24,
+        "service_square_bits": 48,
+        "busy_sum_bits": 56,
+        "service_second_sum_bits": 80,
+        "fixed_latency_integer_bits": 40,
+        "cost_integer_bits": 80,
+        "total_cost_integer_bits": 84,
+        "score_integer_bits": 85,
+        "ca2_dividend_integer_bits": 128,
+        "ca2_divisor_bits": 128,
+        "feedback_dividend_integer_bits": 128,
+        "shared_divider_integer_bits": 128
+      },
+      "seeds": 10000,
+      "allocation_agreement_pct": 99.41,
+      "mismatches": 59,
+      "candidate_objective_mae": 4028.0934607681543,
+      "candidate_objective_p99": 42064.85023006634,
+      "max_candidate_objective_error": 286566.97135015856,
+      "mean_oracle_regret": 35.137231646054246,
+      "max_oracle_regret": 32627.149232729338,
+      "first_mismatch_seed": 139,
+      "comparison_format": "W100K-Q4.4-R16-trunc",
+      "agreement_with_comparison_pct": 100.0,
+      "first_comparison_mismatch_seed": null,
+      "mismatch_details": null,
+      "saturation_counts": {}
+    }
+  ],
+  "ranges": {
+    "observed_maxima": {
+      "ca2": 13.582380997692086,
+      "beta": 1.75,
+      "r0": 59446,
+      "r1": 619800,
+      "r2": 15218000,
+      "fixed_cost": 1188920,
+      "capacity_gain": 4356240,
+      "reference_objective": 3900508.5963501586
+    },
+    "observed_required_integer_bits": {
+      "ca2": 4,
+      "beta": 2,
+      "r0": 16,
+      "r1": 20,
+      "r2": 24,
+      "fixed_cost": 21,
+      "capacity_gain": 23,
+      "reference_objective": 22
+    }
+  }
+}
