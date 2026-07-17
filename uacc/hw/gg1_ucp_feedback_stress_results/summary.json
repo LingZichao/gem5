@@ -1,0 +1,39 @@
+{
+  "config": {
+    "cores": 4,
+    "window": 2000.0,
+    "windows": 40,
+    "bandwidth": 8.0,
+    "buffer_depth": 8,
+    "max_ways": 4,
+    "lower_miss_penalty": 300.0,
+    "fixed_latency": 6.0,
+    "rho_max": 0.9,
+    "response_delay": 20.0,
+    "feedback_alpha": 0.25,
+    "burst_bandwidth_factor": 1.0,
+    "synchronized_bandwidth_factor": 1.0,
+    "contention_bandwidth_factor": 0.4,
+    "trace_pattern": "feedback_step"
+  },
+  "seeds": 12,
+  "case": "feedback_stress",
+  "scales": [
+    0.7,
+    1.0,
+    1.3,
+    1.6
+  ],
+  "policies": [
+    "ucp",
+    "ucp_gg1",
+    "ucp_gg1_feedback"
+  ],
+  "policy_labels": {
+    "ucp": "UCP",
+    "ucp_gg1": "UCP + G/G/1",
+    "ucp_gg1_feedback": "UCP + G/G/1 + feedback"
+  },
+  "sweep_rows": 144,
+  "trace_rows": 40
+}

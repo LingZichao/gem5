@@ -1,0 +1,18 @@
+OpenROAD 26Q3-463-gbde79242a0 
+Features included (+) or not (-): +GPU +GUI +Python
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+[INFO ORD-0030] Using 16 thread(s).
+source /OpenROAD-flow-scripts/flow/platforms/asap7/liberty_suppressions.tcl
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_AO_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_INVBUF_RVT_FF_nldm_220122.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_OA_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SIMPLE_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SEQ_RVT_FF_nldm_220123.lib
+read_db /work/util/uacc_hw/openroad/work_precision_f4/results/asap7/uacc_section14_allocator_precision_sweep/base/5_1_grt.odb
+read_sdc /work/util/uacc_hw/openroad/work_precision_f4/results/asap7/uacc_section14_allocator_precision_sweep/base/5_1_grt.sdc
+source /OpenROAD-flow-scripts/flow/platforms/asap7/setRC.tcl
+write_db /work/util/uacc_hw/openroad/work_precision_f4/results/asap7/uacc_section14_allocator_precision_sweep/base/5_2_route.odb
+Elapsed time: 0:03.87[h:]min:sec. CPU time: user 3.61 sys 0.44 (104%). Peak memory: 1072056KB.
+Log                       Ext     Elapsed/s Peak Memory/MB sha1sum result [0:20)
+5_2_route                 .odb            3           1046 1ed26e056c50ee6b7fc6

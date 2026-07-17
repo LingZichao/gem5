@@ -1,0 +1,156 @@
+
+==========================================================================
+synth report_tns
+--------------------------------------------------------------------------
+tns max 0.00
+
+==========================================================================
+synth report_wns
+--------------------------------------------------------------------------
+wns max 0.00
+
+==========================================================================
+synth report_worst_slack
+--------------------------------------------------------------------------
+worst slack max 2948.39
+
+==========================================================================
+synth report_clock_min_period
+--------------------------------------------------------------------------
+core_clock period_min = 2051.61 fmax = 487.42
+
+==========================================================================
+synth report_checks -path_delay min
+--------------------------------------------------------------------------
+Startpoint: u14611 (rising edge-triggered flip-flop clocked by core_clock)
+Endpoint: u11950 (rising edge-triggered flip-flop clocked by core_clock)
+Path Group: core_clock
+Path Type: min
+
+Fanout     Cap    Slew   Delay    Time   Description
+-----------------------------------------------------------------------------
+                  0.00    0.00    0.00   clock core_clock (rise edge)
+                          0.00    0.00   clock network delay (ideal)
+                  0.00    0.00    0.00 ^ u14611/CLK (DFFHQNx1_ASAP7_75t_R)
+     1    0.51   11.24   31.22   31.22 ^ u14611/QN (DFFHQNx1_ASAP7_75t_R)
+                                         grp_uacc_section14_cost_core_fu_1383.uacc_section14_allocator_mul_8ns_39ns_47_7_1_U16.uacc_section14_allocator_uacc_section14_allocator_mul_8ns_39ns_47_7_1_Mul_DSP_1_U.buff1[45] (net)
+                 11.24    0.00   31.22 ^ u14612/A (INVx1_ASAP7_75t_R)
+     1    0.55    6.04    5.60   36.81 v u14612/Y (INVx1_ASAP7_75t_R)
+                                         n9219 (net)
+                  6.04    0.00   36.81 v u11950/D (DFFHQNx1_ASAP7_75t_R)
+                                 36.81   data arrival time
+
+                  0.00    0.00    0.00   clock core_clock (rise edge)
+                          0.00    0.00   clock network delay (ideal)
+                          0.00    0.00   clock reconvergence pessimism
+                                  0.00 ^ u11950/CLK (DFFHQNx1_ASAP7_75t_R)
+                          8.65    8.65   library hold time
+                                  8.65   data required time
+-----------------------------------------------------------------------------
+                                  8.65   data required time
+                                -36.81   data arrival time
+-----------------------------------------------------------------------------
+                                 28.16   slack (MET)
+
+
+
+==========================================================================
+synth report_checks -path_delay max
+--------------------------------------------------------------------------
+Startpoint: lookahead_delta_q0[1] (input port clocked by core_clock)
+Endpoint: candidate_valid_we1 (output port clocked by core_clock)
+Path Group: core_clock
+Path Type: max
+
+Fanout     Cap    Slew   Delay    Time   Description
+-----------------------------------------------------------------------------
+                  0.00    0.00    0.00   clock core_clock (rise edge)
+                          0.00    0.00   clock network delay (ideal)
+                       1000.00 1000.00 v input external delay
+     2    1.76    0.00    0.00 1000.00 v lookahead_delta_q0[1] (in)
+                                         lookahead_delta_q0[1] (net)
+                  0.00    0.00 1000.00 v u962/A (INVx1_ASAP7_75t_R)
+     2    1.27    8.34    5.01 1005.01 ^ u962/Y (INVx1_ASAP7_75t_R)
+                                         n713 (net)
+                  8.34    0.00 1005.01 ^ u963/C (AND3x1_ASAP7_75t_R)
+     1    0.65    8.70   17.34 1022.36 ^ u963/Y (AND3x1_ASAP7_75t_R)
+                                         n714 (net)
+                  8.70    0.00 1022.36 ^ u965/A (OR3x1_ASAP7_75t_R)
+     1    0.61    6.33   10.71 1033.07 ^ u965/Y (OR3x1_ASAP7_75t_R)
+                                         n716 (net)
+                  6.33    0.00 1033.07 ^ u967/C (AND4x1_ASAP7_75t_R)
+     1    0.00    6.07   18.54 1051.61 ^ u967/Y (AND4x1_ASAP7_75t_R)
+                                         candidate_valid_we1 (net)
+                  6.07    0.00 1051.61 ^ candidate_valid_we1 (out)
+                               1051.61   data arrival time
+
+                  0.00 5000.00 5000.00   clock core_clock (rise edge)
+                          0.00 5000.00   clock network delay (ideal)
+                          0.00 5000.00   clock reconvergence pessimism
+                       -1000.00 4000.00   output external delay
+                               4000.00   data required time
+-----------------------------------------------------------------------------
+                               4000.00   data required time
+                               -1051.61   data arrival time
+-----------------------------------------------------------------------------
+                               2948.39   slack (MET)
+
+
+
+==========================================================================
+synth report_checks -unconstrained
+--------------------------------------------------------------------------
+Startpoint: lookahead_delta_q0[1] (input port clocked by core_clock)
+Endpoint: candidate_valid_we1 (output port clocked by core_clock)
+Path Group: core_clock
+Path Type: max
+
+Fanout     Cap    Slew   Delay    Time   Description
+-----------------------------------------------------------------------------
+                  0.00    0.00    0.00   clock core_clock (rise edge)
+                          0.00    0.00   clock network delay (ideal)
+                       1000.00 1000.00 v input external delay
+     2    1.76    0.00    0.00 1000.00 v lookahead_delta_q0[1] (in)
+                                         lookahead_delta_q0[1] (net)
+                  0.00    0.00 1000.00 v u962/A (INVx1_ASAP7_75t_R)
+     2    1.27    8.34    5.01 1005.01 ^ u962/Y (INVx1_ASAP7_75t_R)
+                                         n713 (net)
+                  8.34    0.00 1005.01 ^ u963/C (AND3x1_ASAP7_75t_R)
+     1    0.65    8.70   17.34 1022.36 ^ u963/Y (AND3x1_ASAP7_75t_R)
+                                         n714 (net)
+                  8.70    0.00 1022.36 ^ u965/A (OR3x1_ASAP7_75t_R)
+     1    0.61    6.33   10.71 1033.07 ^ u965/Y (OR3x1_ASAP7_75t_R)
+                                         n716 (net)
+                  6.33    0.00 1033.07 ^ u967/C (AND4x1_ASAP7_75t_R)
+     1    0.00    6.07   18.54 1051.61 ^ u967/Y (AND4x1_ASAP7_75t_R)
+                                         candidate_valid_we1 (net)
+                  6.07    0.00 1051.61 ^ candidate_valid_we1 (out)
+                               1051.61   data arrival time
+
+                  0.00 5000.00 5000.00   clock core_clock (rise edge)
+                          0.00 5000.00   clock network delay (ideal)
+                          0.00 5000.00   clock reconvergence pessimism
+                       -1000.00 4000.00   output external delay
+                               4000.00   data required time
+-----------------------------------------------------------------------------
+                               4000.00   data required time
+                               -1051.61   data arrival time
+-----------------------------------------------------------------------------
+                               2948.39   slack (MET)
+
+
+
+==========================================================================
+synth report_power
+--------------------------------------------------------------------------
+Group                  Internal  Switching    Leakage      Total
+                          Power      Power      Power      Power (Watts)
+----------------------------------------------------------------
+Sequential             2.65e-03   8.83e-05   8.91e-07   2.74e-03  27.1%
+Combinational          5.04e-03   2.35e-03   3.97e-06   7.39e-03  72.9%
+Clock                  0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+Macro                  0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+Pad                    0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+----------------------------------------------------------------
+Total                  7.69e-03   2.44e-03   4.86e-06   1.01e-02 100.0%
+                          75.9%      24.1%       0.0%

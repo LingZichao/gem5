@@ -1,0 +1,1046 @@
+OpenROAD 26Q3-463-gbde79242a0 
+Features included (+) or not (-): +GPU +GUI +Python
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+[INFO ORD-0030] Using 16 thread(s).
+source /OpenROAD-flow-scripts/flow/platforms/asap7/liberty_suppressions.tcl
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_AO_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_INVBUF_RVT_FF_nldm_220122.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_OA_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SIMPLE_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SEQ_RVT_FF_nldm_220123.lib
+read_db /work/util/uacc_hw/openroad/work_full/results/asap7/uacc_section14_allocator/base/4_cts.odb
+read_sdc /work/util/uacc_hw/openroad/work_full/results/asap7/uacc_section14_allocator/base/4_cts.sdc
+source /OpenROAD-flow-scripts/flow/platforms/asap7/setRC.tcl
+pin_access
+[INFO DRT-0149] Reading tech and libs.
+
+Units:                1000
+Number of layers:     21
+Number of macros:     212
+Number of vias:       14
+Number of viarulegen: 11
+
+[INFO DRT-0150] Reading design.
+[WARNING DRT-0120] Large net net59349 has 105 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net59308 has 127 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net59298 has 140 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net59296 has 110 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net59295 has 117 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net59285 has 105 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net57874 has 102 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net56663 has 102 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net58594 has 134 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net59449 has 104 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net59448 has 113 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net57931 has 118 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net58260 has 105 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net57810 has 104 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net57833 has 103 pins which may impact routing performance. Consider optimization.
+[WARNING DRT-0120] Large net net57815 has 103 pins which may impact routing performance. Consider optimization.
+
+Design:                   uacc_section14_allocator_uacc_section14_allocator
+Die area:                 ( 0 0 ) ( 573583 573583 )
+Number of track patterns: 32
+Number of DEF vias:       0
+Number of components:     541320
+Number of terminals:      1472
+Number of snets:          2
+Number of nets:           509582
+
+[INFO DRT-0167] List of default vias:
+  Layer V2
+    default via: VIA23
+  Layer V3
+    default via: VIA34
+  Layer V4
+    default via: VIA45
+  Layer V5
+    default via: VIA56
+  Layer V6
+    default via: VIA67
+  Layer V7
+    default via: VIA78
+  Layer V8
+    default via: VIA89
+  Layer V9
+    default via: VIA9Pad
+[INFO DRT-0162] Library cell analysis.
+[INFO DRT-0163] Instance analysis.
+  Complete 100000 instances.
+  Complete 200000 instances.
+  Complete 300000 instances.
+  Complete 400000 instances.
+  Complete 500000 instances.
+[INFO DRT-0164] Number of unique instances = 310.
+[INFO DRT-0168] Init region query.
+[INFO DRT-0018]   Complete 100000 insts.
+[INFO DRT-0018]   Complete 200000 insts.
+[INFO DRT-0018]   Complete 300000 insts.
+[INFO DRT-0018]   Complete 400000 insts.
+[INFO DRT-0018]   Complete 500000 insts.
+[INFO DRT-0024]   Complete Active.
+[INFO DRT-0024]   Complete V0.
+[INFO DRT-0024]   Complete M1.
+[INFO DRT-0024]   Complete V1.
+[INFO DRT-0024]   Complete M2.
+[INFO DRT-0024]   Complete V2.
+[INFO DRT-0024]   Complete M3.
+[INFO DRT-0024]   Complete V3.
+[INFO DRT-0024]   Complete M4.
+[INFO DRT-0024]   Complete V4.
+[INFO DRT-0024]   Complete M5.
+[INFO DRT-0024]   Complete V5.
+[INFO DRT-0024]   Complete M6.
+[INFO DRT-0024]   Complete V6.
+[INFO DRT-0024]   Complete M7.
+[INFO DRT-0024]   Complete V7.
+[INFO DRT-0024]   Complete M8.
+[INFO DRT-0024]   Complete V8.
+[INFO DRT-0024]   Complete M9.
+[INFO DRT-0024]   Complete V9.
+[INFO DRT-0024]   Complete Pad.
+[INFO DRT-0033] Active shape region query size = 0.
+[INFO DRT-0033] V0 shape region query size = 0.
+[INFO DRT-0033] M1 shape region query size = 11792557.
+[INFO DRT-0033] V1 shape region query size = 34233782.
+[INFO DRT-0033] M2 shape region query size = 592273.
+[INFO DRT-0033] V2 shape region query size = 668436.
+[INFO DRT-0033] M3 shape region query size = 668436.
+[INFO DRT-0033] V3 shape region query size = 445624.
+[INFO DRT-0033] M4 shape region query size = 446451.
+[INFO DRT-0033] V4 shape region query size = 445624.
+[INFO DRT-0033] M5 shape region query size = 245927.
+[INFO DRT-0033] V5 shape region query size = 44520.
+[INFO DRT-0033] M6 shape region query size = 22680.
+[INFO DRT-0033] V6 shape region query size = 0.
+[INFO DRT-0033] M7 shape region query size = 0.
+[INFO DRT-0033] V7 shape region query size = 0.
+[INFO DRT-0033] M8 shape region query size = 0.
+[INFO DRT-0033] V8 shape region query size = 0.
+[INFO DRT-0033] M9 shape region query size = 0.
+[INFO DRT-0033] V9 shape region query size = 0.
+[INFO DRT-0033] Pad shape region query size = 0.
+[INFO DRT-0165] Start pin access.
+[INFO DRT-0076]   Complete 1000 pins.
+[INFO DRT-0078]   Complete 1722 pins.
+[INFO DRT-0079]   Complete 100 unique inst patterns.
+[INFO DRT-0079]   Complete 200 unique inst patterns.
+[INFO DRT-0079]   Complete 300 unique inst patterns.
+[INFO DRT-0081]   Complete 310 unique inst patterns.
+[INFO DRT-0082]   Complete 10000 groups.
+[INFO DRT-0082]   Complete 20000 groups.
+[INFO DRT-0082]   Complete 30000 groups.
+[INFO DRT-0082]   Complete 40000 groups.
+[INFO DRT-0082]   Complete 50000 groups.
+[INFO DRT-0082]   Complete 60000 groups.
+[INFO DRT-0082]   Complete 70000 groups.
+[INFO DRT-0082]   Complete 80000 groups.
+[INFO DRT-0082]   Complete 90000 groups.
+[INFO DRT-0082]   Complete 100000 groups.
+[INFO DRT-0082]   Complete 200000 groups.
+[INFO DRT-0082]   Complete 300000 groups.
+[INFO DRT-0084]   Complete 374044 groups.
+#scanned instances     = 541320
+#unique  instances     = 310
+#stdCellGenAp          = 9209
+#stdCellValidPlanarAp  = 45
+#stdCellValidViaAp     = 7405
+#stdCellPinNoAp        = 0
+#stdCellPinCnt         = 1612774
+#instTermValidViaApCnt = 0
+#macroGenAp            = 0
+#macroValidPlanarAp    = 0
+#macroValidViaAp       = 0
+#macroNoAp             = 0
+[INFO DRT-0166] Complete pin access.
+[INFO DRT-0267] cpu time = 02:07:51, elapsed time = 00:08:01, memory = 3493.64 (MB), peak = 4668.06 (MB)
+Took 493 seconds: pin_access
+global_route -congestion_report_file /work/util/uacc_hw/openroad/work_full/reports/asap7/uacc_section14_allocator/base/congestion.rpt -congestion_iterations 30 -congestion_report_iter_step 5 -verbose -resistance_aware
+[INFO GRT-0020] Min routing layer: M2
+[INFO GRT-0021] Max routing layer: M7
+[INFO GRT-0022] Global adjustment: 0%
+[INFO GRT-0023] Grid origin: (0, 0)
+[INFO GRT-0088] Layer M1      Track-Pitch = 0.0360  line-2-Via Pitch: 0.0360
+[INFO GRT-0088] Layer M2      Track-Pitch = 0.0390  line-2-Via Pitch: 0.0360
+[INFO GRT-0088] Layer M3      Track-Pitch = 0.0360  line-2-Via Pitch: 0.0360
+[INFO GRT-0088] Layer M4      Track-Pitch = 0.0480  line-2-Via Pitch: 0.0480
+[INFO GRT-0088] Layer M5      Track-Pitch = 0.0480  line-2-Via Pitch: 0.0480
+[INFO GRT-0088] Layer M6      Track-Pitch = 0.0640  line-2-Via Pitch: 0.0640
+[INFO GRT-0088] Layer M7      Track-Pitch = 0.0640  line-2-Via Pitch: 0.0640
+[INFO GRT-0003] Macros: 0
+[INFO GRT-0004] Blockages: 365238
+[INFO GRT-0019] Found 7088 clock nets.
+[INFO GRT-0001] Minimum degree: 2
+[INFO GRT-0002] Maximum degree: 140
+
+[INFO GRT-0053] Routing resources analysis:
+          Routing      Original      Derated      Resource
+Layer     Direction    Resources     Resources    Reduction (%)
+---------------------------------------------------------------
+M1         Vertical            0             0          0.00%
+M2         Horizontal   12184212       8784459          27.90%
+M3         Vertical     15357627      11406049          25.73%
+M4         Horizontal   11775172       8743149          25.75%
+M5         Vertical     11353716       8414158          25.89%
+M6         Horizontal    7908222       5351070          32.34%
+M7         Vertical      9006810       6068190          32.63%
+---------------------------------------------------------------
+
+[INFO GRT-0197] Via related to pin nodes: 3337139
+[INFO GRT-0198] Via related Steiner nodes: 70777
+[INFO GRT-0199] Via filling finished.
+[INFO GRT-0111] Final number of vias: 4390836
+[INFO GRT-0112] Final usage 3D: 16443987
+
+[INFO GRT-0096] Final congestion report:
+Layer         Resource        Demand        Usage (%)    Max H / Max V / Total Congestion
+---------------------------------------------------------------------------------------
+M1                   0             0            0.00%             0 /  0 /  0
+M2             8784459       1293461           14.72%             0 /  0 /  0
+M3            11406049       1500365           13.15%             0 /  0 /  0
+M4             8743149        142238            1.63%             0 /  0 /  0
+M5             8414158        106181            1.26%             0 /  0 /  0
+M6             5351070        137831            2.58%             0 /  0 /  0
+M7             6068190         91403            1.51%             0 /  0 /  0
+---------------------------------------------------------------------------------------
+Total         48767075       3271479            6.71%             0 /  0 /  0
+
+[INFO GRT-0018] Total wirelength: 26053269 um
+[INFO GRT-0014] Routed nets: 509355
+[INFO GRT-0303] Global routing runtime = 00:03:52
+Took 241 seconds: global_route -congestion_report_file /work/util/uacc_hw/openroad/work_full/reports/asap7/uacc_section14_allocator/base/congestion.rpt -congestion_iterations 30 -congestion_report_iter_step 5 -verbose -resistance_aware
+estimate_parasitics -global_routing
+Took 15 seconds: estimate_parasitics -global_routing
+Perform buffer insertion and gate resizing...
+repair_design -verbose
+Iteration |   Area    | Resized | Buffers | Nets repaired | Remaining
+---------------------------------------------------------------------
+        0 |     +0.0% |       0 |       0 |             0 |    515125
+     1000 |     +0.0% |       0 |       0 |             0 |    514125
+     2000 |     +0.0% |       0 |       0 |             0 |    513125
+     3000 |     +0.0% |       0 |       0 |             0 |    512125
+     4000 |     +0.0% |       0 |       0 |             0 |    511125
+     5000 |     +0.0% |       0 |       0 |             0 |    510125
+     6000 |     +0.0% |       0 |       0 |             0 |    509125
+     7000 |     +0.0% |       0 |       0 |             0 |    508125
+     8000 |     +0.0% |       0 |       0 |             0 |    507125
+     9000 |     +0.0% |       0 |       0 |             0 |    506125
+    10000 |     +0.0% |       0 |       0 |             0 |    505125
+    11000 |     +0.0% |       0 |       0 |             0 |    504125
+    12000 |     +0.0% |       0 |       1 |             1 |    503125
+    13000 |     +0.0% |       0 |       1 |             1 |    502125
+    14000 |     +0.0% |       0 |       1 |             1 |    501125
+    15000 |     +0.0% |       0 |       1 |             1 |    500125
+    16000 |     +0.0% |       0 |       1 |             1 |    499125
+    17000 |     +0.0% |       0 |       1 |             1 |    498125
+    18000 |     +0.0% |       0 |       1 |             1 |    497125
+    19000 |     +0.0% |       0 |       1 |             1 |    496125
+    20000 |     +0.0% |       0 |       1 |             1 |    495125
+    21000 |     +0.0% |       0 |       1 |             1 |    494125
+    22000 |     +0.0% |       0 |       1 |             1 |    493125
+    23000 |     +0.0% |       0 |       1 |             1 |    492125
+    24000 |     +0.0% |       0 |       1 |             1 |    491125
+    25000 |     +0.0% |       0 |       1 |             1 |    490125
+    26000 |     +0.0% |       0 |       1 |             1 |    489125
+    27000 |     +0.0% |       0 |       3 |             3 |    488125
+    28000 |     +0.0% |       0 |       3 |             3 |    487125
+    29000 |     +0.0% |       0 |       4 |             4 |    486125
+    30000 |     +0.0% |       0 |       4 |             4 |    485125
+    31000 |     +0.0% |       0 |       4 |             4 |    484125
+    32000 |     +0.0% |       0 |       4 |             4 |    483125
+    33000 |     +0.0% |       0 |       4 |             4 |    482125
+    34000 |     +0.0% |       0 |       4 |             4 |    481125
+    35000 |     +0.0% |       0 |       4 |             4 |    480125
+    36000 |     +0.0% |       0 |       4 |             4 |    479125
+    37000 |     +0.0% |       0 |       4 |             4 |    478125
+    38000 |     +0.0% |       0 |       4 |             4 |    477125
+    39000 |     +0.0% |       0 |       4 |             4 |    476125
+    40000 |     +0.0% |       0 |       4 |             4 |    475125
+    41000 |     +0.0% |       0 |       4 |             4 |    474125
+    42000 |     +0.0% |       0 |       4 |             4 |    473125
+    43000 |     +0.0% |       0 |       4 |             4 |    472125
+    44000 |     +0.0% |       0 |       4 |             4 |    471125
+    45000 |     +0.0% |       0 |       5 |             5 |    470125
+    46000 |     +0.0% |       0 |       5 |             5 |    469125
+    47000 |     +0.0% |       0 |       5 |             5 |    468125
+    48000 |     +0.0% |       0 |       5 |             5 |    467125
+    49000 |     +0.0% |       0 |       5 |             5 |    466125
+    50000 |     +0.0% |       0 |       5 |             5 |    465125
+    51000 |     +0.0% |       0 |       5 |             5 |    464125
+    52000 |     +0.0% |       0 |       5 |             5 |    463125
+    53000 |     +0.0% |       0 |       5 |             5 |    462125
+    54000 |     +0.0% |       0 |       5 |             5 |    461125
+    55000 |     +0.0% |       0 |       5 |             5 |    460125
+    56000 |     +0.0% |       0 |       5 |             5 |    459125
+    57000 |     +0.0% |       0 |       5 |             5 |    458125
+    58000 |     +0.0% |       0 |       5 |             5 |    457125
+    59000 |     +0.0% |       0 |       5 |             5 |    456125
+    60000 |     +0.0% |       0 |       5 |             5 |    455125
+    61000 |     +0.0% |       0 |       5 |             5 |    454125
+    62000 |     +0.0% |       0 |       5 |             5 |    453125
+    63000 |     +0.0% |       0 |       5 |             5 |    452125
+    64000 |     +0.0% |       0 |       5 |             5 |    451125
+    65000 |     +0.0% |       0 |       5 |             5 |    450125
+    66000 |     +0.0% |       0 |       5 |             5 |    449125
+    67000 |     +0.0% |       0 |       5 |             5 |    448125
+    68000 |     +0.0% |       0 |       5 |             5 |    447125
+    69000 |     +0.0% |       0 |       5 |             5 |    446125
+    70000 |     +0.0% |       0 |       5 |             5 |    445125
+    71000 |     +0.0% |       0 |       5 |             5 |    444125
+    72000 |     +0.0% |       0 |       5 |             5 |    443125
+    73000 |     +0.0% |       0 |       5 |             5 |    442125
+    74000 |     +0.0% |       0 |       5 |             5 |    441125
+    75000 |     +0.0% |       0 |       5 |             5 |    440125
+    76000 |     +0.0% |       0 |       5 |             5 |    439125
+    77000 |     +0.0% |       0 |       5 |             5 |    438125
+    78000 |     +0.0% |       0 |       5 |             5 |    437125
+    79000 |     +0.0% |       0 |       5 |             5 |    436125
+    80000 |     +0.0% |       0 |       5 |             5 |    435125
+    81000 |     +0.0% |       0 |       5 |             5 |    434125
+    82000 |     +0.0% |       0 |       5 |             5 |    433125
+    83000 |     +0.0% |       0 |       5 |             5 |    432125
+    84000 |     +0.0% |       0 |       5 |             5 |    431125
+    85000 |     +0.0% |       0 |       5 |             5 |    430125
+    86000 |     +0.0% |       0 |       5 |             5 |    429125
+    87000 |     +0.0% |       0 |       5 |             5 |    428125
+    88000 |     +0.0% |       0 |       5 |             5 |    427125
+    89000 |     +0.0% |       0 |       5 |             5 |    426125
+    90000 |     +0.0% |       0 |       5 |             5 |    425125
+    91000 |     +0.0% |       0 |       5 |             5 |    424125
+    92000 |     +0.0% |       0 |       5 |             5 |    423125
+    93000 |     +0.0% |       0 |       5 |             5 |    422125
+    94000 |     +0.0% |       0 |       5 |             5 |    421125
+    95000 |     +0.0% |       0 |       5 |             5 |    420125
+    96000 |     +0.0% |       0 |       5 |             5 |    419125
+    97000 |     +0.0% |       0 |       5 |             5 |    418125
+    98000 |     +0.0% |       0 |       5 |             5 |    417125
+    99000 |     +0.0% |       0 |       5 |             5 |    416125
+   100000 |     +0.0% |       0 |       5 |             5 |    415125
+   101000 |     +0.0% |       0 |       5 |             5 |    414125
+   102000 |     +0.0% |       0 |       5 |             5 |    413125
+   103000 |     +0.0% |       0 |       5 |             5 |    412125
+   104000 |     +0.0% |       0 |       5 |             5 |    411125
+   105000 |     +0.0% |       0 |       5 |             5 |    410125
+   106000 |     +0.0% |       0 |       5 |             5 |    409125
+   107000 |     +0.0% |       0 |       5 |             5 |    408125
+   108000 |     +0.0% |       0 |       5 |             5 |    407125
+   109000 |     +0.0% |       0 |       5 |             5 |    406125
+   110000 |     +0.0% |       0 |       5 |             5 |    405125
+   111000 |     +0.0% |       0 |       5 |             5 |    404125
+   112000 |     +0.0% |       0 |       5 |             5 |    403125
+   113000 |     +0.0% |       0 |       5 |             5 |    402125
+   114000 |     +0.0% |       0 |       5 |             5 |    401125
+   115000 |     +0.0% |       0 |       5 |             5 |    400125
+   116000 |     +0.0% |       0 |       5 |             5 |    399125
+   117000 |     +0.0% |       0 |       5 |             5 |    398125
+   118000 |     +0.0% |       0 |       5 |             5 |    397125
+   119000 |     +0.0% |       0 |       5 |             5 |    396125
+   120000 |     +0.0% |       0 |       5 |             5 |    395125
+   121000 |     +0.0% |       0 |       5 |             5 |    394125
+   122000 |     +0.0% |       0 |       5 |             5 |    393125
+   123000 |     +0.0% |       0 |       5 |             5 |    392125
+   124000 |     +0.0% |       0 |       5 |             5 |    391125
+   125000 |     +0.0% |       0 |       5 |             5 |    390125
+   126000 |     +0.0% |       0 |       5 |             5 |    389125
+   127000 |     +0.0% |       0 |       5 |             5 |    388125
+   128000 |     +0.0% |       0 |       5 |             5 |    387125
+   129000 |     +0.0% |       0 |       5 |             5 |    386125
+   130000 |     +0.0% |       0 |       5 |             5 |    385125
+   131000 |     +0.0% |       0 |       5 |             5 |    384125
+   132000 |     +0.0% |       0 |       5 |             5 |    383125
+   133000 |     +0.0% |       0 |       5 |             5 |    382125
+   134000 |     +0.0% |       0 |       5 |             5 |    381125
+   135000 |     +0.0% |       0 |       5 |             5 |    380125
+   136000 |     +0.0% |       0 |       5 |             5 |    379125
+   137000 |     +0.0% |       0 |       5 |             5 |    378125
+   138000 |     +0.0% |       0 |       5 |             5 |    377125
+   139000 |     +0.0% |       0 |       5 |             5 |    376125
+   140000 |     +0.0% |       0 |       5 |             5 |    375125
+   141000 |     +0.0% |       0 |       5 |             5 |    374125
+   142000 |     +0.0% |       0 |       5 |             5 |    373125
+   143000 |     +0.0% |       0 |       5 |             5 |    372125
+   144000 |     +0.0% |       0 |       5 |             5 |    371125
+   145000 |     +0.0% |       0 |       5 |             5 |    370125
+   146000 |     +0.0% |       0 |       5 |             5 |    369125
+   147000 |     +0.0% |       0 |       5 |             5 |    368125
+   148000 |     +0.0% |       0 |       5 |             5 |    367125
+   149000 |     +0.0% |       0 |       5 |             5 |    366125
+   150000 |     +0.0% |       0 |       5 |             5 |    365125
+   151000 |     +0.0% |       0 |       5 |             5 |    364125
+   152000 |     +0.0% |       0 |       5 |             5 |    363125
+   153000 |     +0.0% |       0 |       5 |             5 |    362125
+   154000 |     +0.0% |       0 |       5 |             5 |    361125
+   155000 |     +0.0% |       0 |       5 |             5 |    360125
+   156000 |     +0.0% |       0 |       5 |             5 |    359125
+   157000 |     +0.0% |       0 |       5 |             5 |    358125
+   158000 |     +0.0% |       0 |       5 |             5 |    357125
+   159000 |     +0.0% |       0 |       5 |             5 |    356125
+   160000 |     +0.0% |       0 |       5 |             5 |    355125
+   161000 |     +0.0% |       0 |       5 |             5 |    354125
+   162000 |     +0.0% |       0 |       5 |             5 |    353125
+   163000 |     +0.0% |       0 |       5 |             5 |    352125
+   164000 |     +0.0% |       0 |       5 |             5 |    351125
+   165000 |     +0.0% |       0 |       5 |             5 |    350125
+   166000 |     +0.0% |       0 |       5 |             5 |    349125
+   167000 |     +0.0% |       0 |       5 |             5 |    348125
+   168000 |     +0.0% |       0 |       5 |             5 |    347125
+   169000 |     +0.0% |       0 |       5 |             5 |    346125
+   170000 |     +0.0% |       0 |       5 |             5 |    345125
+   171000 |     +0.0% |       0 |       5 |             5 |    344125
+   172000 |     +0.0% |       0 |       5 |             5 |    343125
+   173000 |     +0.0% |       0 |       5 |             5 |    342125
+   174000 |     +0.0% |       0 |       5 |             5 |    341125
+   175000 |     +0.0% |       0 |       5 |             5 |    340125
+   176000 |     +0.0% |       0 |       5 |             5 |    339125
+   177000 |     +0.0% |       0 |       5 |             5 |    338125
+   178000 |     +0.0% |       0 |       5 |             5 |    337125
+   179000 |     +0.0% |       0 |       5 |             5 |    336125
+   180000 |     +0.0% |       0 |       5 |             5 |    335125
+   181000 |     +0.0% |       0 |       5 |             5 |    334125
+   182000 |     +0.0% |       0 |       5 |             5 |    333125
+   183000 |     +0.0% |       0 |       5 |             5 |    332125
+   184000 |     +0.0% |       0 |       5 |             5 |    331125
+   185000 |     +0.0% |       0 |       5 |             5 |    330125
+   186000 |     +0.0% |       0 |       5 |             5 |    329125
+   187000 |     +0.0% |       0 |       5 |             5 |    328125
+   188000 |     +0.0% |       0 |       5 |             5 |    327125
+   189000 |     +0.0% |       0 |       5 |             5 |    326125
+   190000 |     +0.0% |       0 |       5 |             5 |    325125
+   191000 |     +0.0% |       0 |       5 |             5 |    324125
+   192000 |     +0.0% |       0 |       5 |             5 |    323125
+   193000 |     +0.0% |       0 |       5 |             5 |    322125
+   194000 |     +0.0% |       0 |       5 |             5 |    321125
+   195000 |     +0.0% |       0 |       5 |             5 |    320125
+   196000 |     +0.0% |       0 |       5 |             5 |    319125
+   197000 |     +0.0% |       0 |       5 |             5 |    318125
+   198000 |     +0.0% |       0 |       5 |             5 |    317125
+   199000 |     +0.0% |       0 |       5 |             5 |    316125
+   200000 |     +0.0% |       0 |       5 |             5 |    315125
+   201000 |     +0.0% |       0 |       5 |             5 |    314125
+   202000 |     +0.0% |       0 |       5 |             5 |    313125
+   203000 |     +0.0% |       0 |       5 |             5 |    312125
+   204000 |     +0.0% |       0 |       5 |             5 |    311125
+   205000 |     +0.0% |       0 |       5 |             5 |    310125
+   206000 |     +0.0% |       0 |       5 |             5 |    309125
+   207000 |     +0.0% |       0 |       5 |             5 |    308125
+   208000 |     +0.0% |       0 |       5 |             5 |    307125
+   209000 |     +0.0% |       0 |       5 |             5 |    306125
+   210000 |     +0.0% |       0 |       5 |             5 |    305125
+   211000 |     +0.0% |       0 |       5 |             5 |    304125
+   212000 |     +0.0% |       0 |       5 |             5 |    303125
+   213000 |     +0.0% |       0 |       5 |             5 |    302125
+   214000 |     +0.0% |       0 |       5 |             5 |    301125
+   215000 |     +0.0% |       0 |       5 |             5 |    300125
+   216000 |     +0.0% |       0 |       5 |             5 |    299125
+   217000 |     +0.0% |       0 |       5 |             5 |    298125
+   218000 |     +0.0% |       0 |       5 |             5 |    297125
+   219000 |     +0.0% |       0 |       5 |             5 |    296125
+   220000 |     +0.0% |       0 |       5 |             5 |    295125
+   221000 |     +0.0% |       0 |       5 |             5 |    294125
+   222000 |     +0.0% |       0 |       5 |             5 |    293125
+   223000 |     +0.0% |       0 |       5 |             5 |    292125
+   224000 |     +0.0% |       0 |       5 |             5 |    291125
+   225000 |     +0.0% |       0 |       5 |             5 |    290125
+   226000 |     +0.0% |       0 |       5 |             5 |    289125
+   227000 |     +0.0% |       0 |       5 |             5 |    288125
+   228000 |     +0.0% |       0 |       5 |             5 |    287125
+   229000 |     +0.0% |       0 |       5 |             5 |    286125
+   230000 |     +0.0% |       0 |       5 |             5 |    285125
+   231000 |     +0.0% |       0 |       5 |             5 |    284125
+   232000 |     +0.0% |       0 |       5 |             5 |    283125
+   233000 |     +0.0% |       0 |       5 |             5 |    282125
+   234000 |     +0.0% |       0 |       5 |             5 |    281125
+   235000 |     +0.0% |       0 |       5 |             5 |    280125
+   236000 |     +0.0% |       0 |       5 |             5 |    279125
+   237000 |     +0.0% |       0 |       5 |             5 |    278125
+   238000 |     +0.0% |       0 |       5 |             5 |    277125
+   239000 |     +0.0% |       0 |       5 |             5 |    276125
+   240000 |     +0.0% |       0 |       5 |             5 |    275125
+   241000 |     +0.0% |       0 |       5 |             5 |    274125
+   242000 |     +0.0% |       0 |       5 |             5 |    273125
+   243000 |     +0.0% |       0 |       5 |             5 |    272125
+   244000 |     +0.0% |       0 |       5 |             5 |    271125
+   245000 |     +0.0% |       0 |       5 |             5 |    270125
+   246000 |     +0.0% |       0 |       5 |             5 |    269125
+   247000 |     +0.0% |       0 |       5 |             5 |    268125
+   248000 |     +0.0% |       0 |       5 |             5 |    267125
+   249000 |     +0.0% |       0 |       5 |             5 |    266125
+   250000 |     +0.0% |       0 |       5 |             5 |    265125
+   251000 |     +0.0% |       0 |       5 |             5 |    264125
+   252000 |     +0.0% |       0 |       5 |             5 |    263125
+   253000 |     +0.0% |       0 |       5 |             5 |    262125
+   254000 |     +0.0% |       0 |       5 |             5 |    261125
+   255000 |     +0.0% |       0 |       5 |             5 |    260125
+   256000 |     +0.0% |       0 |       5 |             5 |    259125
+   257000 |     +0.0% |       0 |       5 |             5 |    258125
+   258000 |     +0.0% |       0 |       5 |             5 |    257125
+   259000 |     +0.0% |       0 |       5 |             5 |    256125
+   260000 |     +0.0% |       0 |       5 |             5 |    255125
+   261000 |     +0.0% |       0 |       5 |             5 |    254125
+   262000 |     +0.0% |       0 |       5 |             5 |    253125
+   263000 |     +0.0% |       0 |       5 |             5 |    252125
+   264000 |     +0.0% |       0 |       5 |             5 |    251125
+   265000 |     +0.0% |       0 |       5 |             5 |    250125
+   266000 |     +0.0% |       0 |       5 |             5 |    249125
+   267000 |     +0.0% |       0 |       5 |             5 |    248125
+   268000 |     +0.0% |       0 |       5 |             5 |    247125
+   269000 |     +0.0% |       0 |       5 |             5 |    246125
+   270000 |     +0.0% |       0 |       5 |             5 |    245125
+   271000 |     +0.0% |       0 |       5 |             5 |    244125
+   272000 |     +0.0% |       0 |       5 |             5 |    243125
+   273000 |     +0.0% |       0 |       5 |             5 |    242125
+   274000 |     +0.0% |       0 |       5 |             5 |    241125
+   275000 |     +0.0% |       0 |       5 |             5 |    240125
+   276000 |     +0.0% |       0 |       5 |             5 |    239125
+   277000 |     +0.0% |       0 |       5 |             5 |    238125
+   278000 |     +0.0% |       0 |       5 |             5 |    237125
+   279000 |     +0.0% |       0 |       5 |             5 |    236125
+   280000 |     +0.0% |       0 |       5 |             5 |    235125
+   281000 |     +0.0% |       0 |       5 |             5 |    234125
+   282000 |     +0.0% |       0 |       5 |             5 |    233125
+   283000 |     +0.0% |       0 |       5 |             5 |    232125
+   284000 |     +0.0% |       0 |       5 |             5 |    231125
+   285000 |     +0.0% |       0 |       5 |             5 |    230125
+   286000 |     +0.0% |       0 |       5 |             5 |    229125
+   287000 |     +0.0% |       0 |       5 |             5 |    228125
+   288000 |     +0.0% |       0 |       5 |             5 |    227125
+   289000 |     +0.0% |       0 |       5 |             5 |    226125
+   290000 |     +0.0% |       0 |       5 |             5 |    225125
+   291000 |     +0.0% |       0 |       5 |             5 |    224125
+   292000 |     +0.0% |       0 |       5 |             5 |    223125
+   293000 |     +0.0% |       0 |       5 |             5 |    222125
+   294000 |     +0.0% |       0 |       5 |             5 |    221125
+   295000 |     +0.0% |       0 |       5 |             5 |    220125
+   296000 |     +0.0% |       0 |       5 |             5 |    219125
+   297000 |     +0.0% |       0 |       5 |             5 |    218125
+   298000 |     +0.0% |       0 |       5 |             5 |    217125
+   299000 |     +0.0% |       0 |       5 |             5 |    216125
+   300000 |     +0.0% |       0 |       5 |             5 |    215125
+   301000 |     +0.0% |       0 |       5 |             5 |    214125
+   302000 |     +0.0% |       0 |       5 |             5 |    213125
+   303000 |     +0.0% |       0 |       5 |             5 |    212125
+   304000 |     +0.0% |       0 |       5 |             5 |    211125
+   305000 |     +0.0% |       0 |       5 |             5 |    210125
+   306000 |     +0.0% |       0 |       5 |             5 |    209125
+   307000 |     +0.0% |       0 |       5 |             5 |    208125
+   308000 |     +0.0% |       0 |       5 |             5 |    207125
+   309000 |     +0.0% |       0 |       5 |             5 |    206125
+   310000 |     +0.0% |       0 |       5 |             5 |    205125
+   311000 |     +0.0% |       0 |       5 |             5 |    204125
+   312000 |     +0.0% |       0 |       5 |             5 |    203125
+   313000 |     +0.0% |       0 |       5 |             5 |    202125
+   314000 |     +0.0% |       0 |       5 |             5 |    201125
+   315000 |     +0.0% |       0 |       5 |             5 |    200125
+   316000 |     +0.0% |       0 |       5 |             5 |    199125
+   317000 |     +0.0% |       0 |       5 |             5 |    198125
+   318000 |     +0.0% |       0 |       5 |             5 |    197125
+   319000 |     +0.0% |       0 |       5 |             5 |    196125
+   320000 |     +0.0% |       0 |       5 |             5 |    195125
+   321000 |     +0.0% |       0 |       5 |             5 |    194125
+   322000 |     +0.0% |       0 |       5 |             5 |    193125
+   323000 |     +0.0% |       0 |       5 |             5 |    192125
+   324000 |     +0.0% |       0 |       5 |             5 |    191125
+   325000 |     +0.0% |       0 |       5 |             5 |    190125
+   326000 |     +0.0% |       0 |       5 |             5 |    189125
+   327000 |     +0.0% |       0 |       5 |             5 |    188125
+   328000 |     +0.0% |       0 |       5 |             5 |    187125
+   329000 |     +0.0% |       0 |       5 |             5 |    186125
+   330000 |     +0.0% |       0 |       5 |             5 |    185125
+   331000 |     +0.0% |       0 |       5 |             5 |    184125
+   332000 |     +0.0% |       0 |       5 |             5 |    183125
+   333000 |     +0.0% |       0 |       5 |             5 |    182125
+   334000 |     +0.0% |       0 |       5 |             5 |    181125
+   335000 |     +0.0% |       0 |       5 |             5 |    180125
+   336000 |     +0.0% |       0 |       5 |             5 |    179125
+   337000 |     +0.0% |       0 |       5 |             5 |    178125
+   338000 |     +0.0% |       0 |       5 |             5 |    177125
+   339000 |     +0.0% |       0 |       5 |             5 |    176125
+   340000 |     +0.0% |       0 |       5 |             5 |    175125
+   341000 |     +0.0% |       0 |       5 |             5 |    174125
+   342000 |     +0.0% |       0 |       5 |             5 |    173125
+   343000 |     +0.0% |       0 |       5 |             5 |    172125
+   344000 |     +0.0% |       0 |       5 |             5 |    171125
+   345000 |     +0.0% |       0 |       5 |             5 |    170125
+   346000 |     +0.0% |       0 |       5 |             5 |    169125
+   347000 |     +0.0% |       0 |       5 |             5 |    168125
+   348000 |     +0.0% |       0 |       5 |             5 |    167125
+   349000 |     +0.0% |       0 |       5 |             5 |    166125
+   350000 |     +0.0% |       0 |       5 |             5 |    165125
+   351000 |     +0.0% |       0 |       5 |             5 |    164125
+   352000 |     +0.0% |       0 |       5 |             5 |    163125
+   353000 |     +0.0% |       0 |       5 |             5 |    162125
+   354000 |     +0.0% |       0 |       5 |             5 |    161125
+   355000 |     +0.0% |       0 |       5 |             5 |    160125
+   356000 |     +0.0% |       0 |       5 |             5 |    159125
+   357000 |     +0.0% |       0 |       5 |             5 |    158125
+   358000 |     +0.0% |       0 |       5 |             5 |    157125
+   359000 |     +0.0% |       0 |       5 |             5 |    156125
+   360000 |     +0.0% |       0 |       5 |             5 |    155125
+   361000 |     +0.0% |       0 |       5 |             5 |    154125
+   362000 |     +0.0% |       0 |       5 |             5 |    153125
+   363000 |     +0.0% |       0 |       5 |             5 |    152125
+   364000 |     +0.0% |       0 |       5 |             5 |    151125
+   365000 |     +0.0% |       0 |       5 |             5 |    150125
+   366000 |     +0.0% |       0 |       5 |             5 |    149125
+   367000 |     +0.0% |       0 |       5 |             5 |    148125
+   368000 |     +0.0% |       0 |       5 |             5 |    147125
+   369000 |     +0.0% |       0 |       5 |             5 |    146125
+   370000 |     +0.0% |       0 |       5 |             5 |    145125
+   371000 |     +0.0% |       0 |       5 |             5 |    144125
+   372000 |     +0.0% |       0 |       5 |             5 |    143125
+   373000 |     +0.0% |       0 |       5 |             5 |    142125
+   374000 |     +0.0% |       0 |       5 |             5 |    141125
+   375000 |     +0.0% |       0 |       5 |             5 |    140125
+   376000 |     +0.0% |       0 |       5 |             5 |    139125
+   377000 |     +0.0% |       0 |       5 |             5 |    138125
+   378000 |     +0.0% |       0 |       5 |             5 |    137125
+   379000 |     +0.0% |       0 |       5 |             5 |    136125
+   380000 |     +0.0% |       0 |       5 |             5 |    135125
+   381000 |     +0.0% |       0 |       5 |             5 |    134125
+   382000 |     +0.0% |       0 |       5 |             5 |    133125
+   383000 |     +0.0% |       0 |       5 |             5 |    132125
+   384000 |     +0.0% |       0 |       5 |             5 |    131125
+   385000 |     +0.0% |       0 |       5 |             5 |    130125
+   386000 |     +0.0% |       0 |       5 |             5 |    129125
+   387000 |     +0.0% |       0 |       5 |             5 |    128125
+   388000 |     +0.0% |       0 |       5 |             5 |    127125
+   389000 |     +0.0% |       0 |       5 |             5 |    126125
+   390000 |     +0.0% |       0 |       5 |             5 |    125125
+   391000 |     +0.0% |       0 |       5 |             5 |    124125
+   392000 |     +0.0% |       0 |       5 |             5 |    123125
+   393000 |     +0.0% |       0 |       5 |             5 |    122125
+   394000 |     +0.0% |       0 |       5 |             5 |    121125
+   395000 |     +0.0% |       0 |       5 |             5 |    120125
+   396000 |     +0.0% |       0 |       5 |             5 |    119125
+   397000 |     +0.0% |       0 |       5 |             5 |    118125
+   398000 |     +0.0% |       0 |       5 |             5 |    117125
+   399000 |     +0.0% |       0 |       5 |             5 |    116125
+   400000 |     +0.0% |       0 |       5 |             5 |    115125
+   401000 |     +0.0% |       0 |       5 |             5 |    114125
+   402000 |     +0.0% |       0 |       5 |             5 |    113125
+   403000 |     +0.0% |       0 |       5 |             5 |    112125
+   404000 |     +0.0% |       0 |       5 |             5 |    111125
+   405000 |     +0.0% |       0 |       5 |             5 |    110125
+   406000 |     +0.0% |       0 |       5 |             5 |    109125
+   407000 |     +0.0% |       0 |       5 |             5 |    108125
+   408000 |     +0.0% |       0 |       5 |             5 |    107125
+   409000 |     +0.0% |       0 |       5 |             5 |    106125
+   410000 |     +0.0% |       0 |       5 |             5 |    105125
+   411000 |     +0.0% |       0 |       5 |             5 |    104125
+   412000 |     +0.0% |       0 |       5 |             5 |    103125
+   413000 |     +0.0% |       0 |       5 |             5 |    102125
+   414000 |     +0.0% |       0 |       5 |             5 |    101125
+   415000 |     +0.0% |       0 |       5 |             5 |    100125
+   416000 |     +0.0% |       0 |       5 |             5 |     99125
+   417000 |     +0.0% |       0 |       5 |             5 |     98125
+   418000 |     +0.0% |       0 |       5 |             5 |     97125
+   419000 |     +0.0% |       0 |       5 |             5 |     96125
+   420000 |     +0.0% |       0 |       5 |             5 |     95125
+   421000 |     +0.0% |       0 |       5 |             5 |     94125
+   422000 |     +0.0% |       0 |       5 |             5 |     93125
+   423000 |     +0.0% |       0 |       5 |             5 |     92125
+   424000 |     +0.0% |       0 |       5 |             5 |     91125
+   425000 |     +0.0% |       0 |       5 |             5 |     90125
+   426000 |     +0.0% |       0 |       5 |             5 |     89125
+   427000 |     +0.0% |       0 |       5 |             5 |     88125
+   428000 |     +0.0% |       0 |       5 |             5 |     87125
+   429000 |     +0.0% |       0 |       5 |             5 |     86125
+   430000 |     +0.0% |       0 |       5 |             5 |     85125
+   431000 |     +0.0% |       0 |       5 |             5 |     84125
+   432000 |     +0.0% |       0 |       5 |             5 |     83125
+   433000 |     +0.0% |       0 |       5 |             5 |     82125
+   434000 |     +0.0% |       0 |       5 |             5 |     81125
+   435000 |     +0.0% |       0 |       5 |             5 |     80125
+   436000 |     +0.0% |       0 |       5 |             5 |     79125
+   437000 |     +0.0% |       0 |       5 |             5 |     78125
+   438000 |     +0.0% |       0 |       5 |             5 |     77125
+   439000 |     +0.0% |       0 |       5 |             5 |     76125
+   440000 |     +0.0% |       0 |       5 |             5 |     75125
+   441000 |     +0.0% |       0 |       5 |             5 |     74125
+   442000 |     +0.0% |       0 |       5 |             5 |     73125
+   443000 |     +0.0% |       0 |       5 |             5 |     72125
+   444000 |     +0.0% |       0 |       5 |             5 |     71125
+   445000 |     +0.0% |       0 |       5 |             5 |     70125
+   446000 |     +0.0% |       0 |       5 |             5 |     69125
+   447000 |     +0.0% |       0 |       6 |             6 |     68125
+   448000 |     +0.0% |       0 |       6 |             6 |     67125
+   449000 |     +0.0% |       0 |       6 |             6 |     66125
+   450000 |     +0.0% |       0 |       6 |             6 |     65125
+   451000 |     +0.0% |       0 |       6 |             6 |     64125
+   452000 |     +0.0% |       0 |       6 |             6 |     63125
+   453000 |     +0.0% |       0 |       6 |             6 |     62125
+   454000 |     +0.0% |       0 |       6 |             6 |     61125
+   455000 |     +0.0% |       0 |       6 |             6 |     60125
+   456000 |     +0.0% |       0 |       6 |             6 |     59125
+   457000 |     +0.0% |       0 |       6 |             6 |     58125
+   458000 |     +0.0% |       0 |       6 |             6 |     57125
+   459000 |     +0.0% |       0 |       6 |             6 |     56125
+   460000 |     +0.0% |       0 |       6 |             6 |     55125
+   461000 |     +0.0% |       0 |       6 |             6 |     54125
+   462000 |     +0.0% |       0 |       6 |             6 |     53125
+   463000 |     +0.0% |       0 |       6 |             6 |     52125
+   464000 |     +0.0% |       0 |       6 |             6 |     51125
+   465000 |     +0.0% |       0 |       6 |             6 |     50125
+   466000 |     +0.0% |       0 |       6 |             6 |     49125
+   467000 |     +0.0% |       0 |       6 |             6 |     48125
+   468000 |     +0.0% |       0 |       6 |             6 |     47125
+   469000 |     +0.0% |       0 |       6 |             6 |     46125
+   470000 |     +0.0% |       0 |       6 |             6 |     45125
+   471000 |     +0.0% |       0 |       6 |             6 |     44125
+   472000 |     +0.0% |       0 |       6 |             6 |     43125
+   473000 |     +0.0% |       0 |       6 |             6 |     42125
+   474000 |     +0.0% |       0 |       6 |             6 |     41125
+   475000 |     +0.0% |       0 |       6 |             6 |     40125
+   476000 |     +0.0% |       0 |       6 |             6 |     39125
+   477000 |     +0.0% |       0 |       6 |             6 |     38125
+   478000 |     +0.0% |       0 |       6 |             6 |     37125
+   479000 |     +0.0% |       0 |       6 |             6 |     36125
+   480000 |     +0.0% |       0 |       6 |             6 |     35125
+   481000 |     +0.0% |       0 |       6 |             6 |     34125
+   482000 |     +0.0% |       0 |       6 |             6 |     33125
+   483000 |     +0.0% |       0 |       6 |             6 |     32125
+   484000 |     +0.0% |       0 |       6 |             6 |     31125
+   485000 |     +0.0% |       0 |       6 |             6 |     30125
+   486000 |     +0.0% |       0 |       6 |             6 |     29125
+   487000 |     +0.0% |       0 |       6 |             6 |     28125
+   488000 |     +0.0% |       0 |       6 |             6 |     27125
+   489000 |     +0.0% |       0 |       6 |             6 |     26125
+   490000 |     +0.0% |       0 |       6 |             6 |     25125
+   491000 |     +0.0% |       0 |       6 |             6 |     24125
+   492000 |     +0.0% |       0 |       6 |             6 |     23125
+   493000 |     +0.0% |       0 |       6 |             6 |     22125
+   494000 |     +0.0% |       0 |       6 |             6 |     21125
+   495000 |     +0.0% |       0 |       6 |             6 |     20125
+   496000 |     +0.0% |       0 |       6 |             6 |     19125
+   497000 |     +0.0% |       0 |       6 |             6 |     18125
+   498000 |     +0.0% |       0 |       6 |             6 |     17125
+   499000 |     +0.0% |       0 |       6 |             6 |     16125
+   500000 |     +0.0% |       0 |       6 |             6 |     15125
+   501000 |     +0.0% |       0 |       6 |             6 |     14125
+   502000 |     +0.0% |       0 |       6 |             6 |     13125
+   503000 |     +0.0% |       0 |       6 |             6 |     12125
+   504000 |     +0.0% |       0 |       6 |             6 |     11125
+   505000 |     +0.0% |       0 |       6 |             6 |     10125
+   506000 |     +0.0% |       0 |       6 |             6 |      9125
+   507000 |     +0.0% |       0 |       6 |             6 |      8125
+   508000 |     +0.0% |       0 |       6 |             6 |      7125
+   509000 |     +0.0% |       0 |       6 |             6 |      6125
+   510000 |     +0.0% |       0 |       6 |             6 |      5125
+   511000 |     +0.0% |       0 |       6 |             6 |      4125
+   512000 |     +0.0% |       0 |       6 |             6 |      3125
+   513000 |     +0.0% |       0 |       6 |             6 |      2125
+   514000 |     +0.0% |       0 |       6 |             6 |      1125
+[WARNING RSZ-0104] Net updated_ca2_q16_q1[7] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q1[6] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q1[5] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q1[4] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q1[3] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q1[2] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q1[1] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q1[0] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q0[7] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q0[6] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q0[5] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q0[4] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q0[3] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q0[2] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q0[1] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_ca2_q16_q0[0] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q1[7] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q1[6] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q1[5] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q1[4] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q1[3] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q1[2] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q1[1] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q1[0] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q0[7] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q0[6] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q0[5] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q0[4] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q0[3] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q0[2] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q0[1] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net updated_beta_q16_q0[0] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[63] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[62] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[61] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[60] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[59] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[58] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[57] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[56] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[55] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[54] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[53] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[52] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[51] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[50] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[49] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q1[48] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[63] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[62] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[61] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[60] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[59] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[58] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[57] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[56] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[55] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[54] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[53] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[52] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[51] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[50] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[49] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[48] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q1[31] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q1[30] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q1[29] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q1[28] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q1[27] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q1[26] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q1[25] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q1[24] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q0[31] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q0[30] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q0[29] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q0[28] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q0[27] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q0[26] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q0[25] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q0[24] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_ca2_q16_q0[31] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_ca2_q16_q0[30] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_ca2_q16_q0[29] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_ca2_q16_q0[28] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_ca2_q16_q0[27] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_ca2_q16_q0[26] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_ca2_q16_q0[25] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_ca2_q16_q0[24] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_beta_q16_q0[31] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_beta_q16_q0[30] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_beta_q16_q0[29] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_beta_q16_q0[28] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_beta_q16_q0[27] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_beta_q16_q0[26] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_beta_q16_q0[25] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net previous_beta_q16_q0[24] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net lookahead_delta_q0[7] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net lookahead_delta_q0[6] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net lookahead_delta_q0[5] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net lookahead_delta_q0[4] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[99] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[98] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[97] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[96] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[127] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[126] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[125] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[124] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[123] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[122] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[121] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[120] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[119] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[118] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[117] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[116] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[115] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[114] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[113] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[112] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[111] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[110] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[109] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[108] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[107] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[106] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[105] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[104] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[103] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[102] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[101] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[100] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net fixed_latency_q16_q0[63] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net fixed_latency_q16_q0[62] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net fixed_latency_q16_q0[61] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net fixed_latency_q16_q0[60] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net fixed_latency_q16_q0[59] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net fixed_latency_q16_q0[58] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net fixed_latency_q16_q0[57] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net fixed_latency_q16_q0[56] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net collector_overflow_q0[7] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net collector_overflow_q0[6] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net collector_overflow_q0[5] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net collector_overflow_q0[4] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net collector_overflow_q0[3] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net collector_overflow_q0[2] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net collector_overflow_q0[1] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[127] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[126] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[125] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[124] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[123] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[122] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[121] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[120] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[119] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[118] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[117] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[116] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[115] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[114] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[113] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[112] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[111] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[110] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[109] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[108] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[107] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[106] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[105] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[104] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[103] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[102] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[101] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q16_q0[100] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_valid_q0[7] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_valid_q0[6] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_valid_q0[5] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_valid_q0[4] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_valid_q0[3] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_valid_q0[2] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_valid_q0[1] only has one pin. Check if it is intended to be dangling.
+   515000 |     +0.0% |       0 |       6 |             6 |       125
+    final |     +0.0% |       0 |       6 |             6 |         0
+---------------------------------------------------------------------
+[INFO RSZ-0034] Found 5 slew violations.
+[INFO RSZ-0036] Found 1 capacitance violations.
+[INFO RSZ-0038] Inserted 6 buffers in 6 nets.
+[INFO RSZ-0504] Runtime: 87.42s
+Took 91 seconds: repair_design -verbose
+global_route -start_incremental
+detailed_placement
+[INFO DPL-0006] Core area: 321948.42 um^2, Movable instances area: 79158.74 um^2, Utilization: 24.6%
+[INFO DPL-0007] Fixed instances area within core: 797.09 um^2, Effective utilization of free area: 24.6%
+[INFO DPL-0005] Diamond search max displacement: +/- 500 sites horizontally, +/- 100 rows vertically.
+[INFO DPL-1102] Legalizing using negotiation legalizer.
+[INFO DPL-1103] Negotiation base search window: +/-20 sites horizontally, +/-5 rows vertically (extendable up to the max displacement cap of +/-500 sites, +/-100 rows near walls).
+	Automatic search window extension enabled.
+[INFO DPL-1104] NegotiationLegalizer DRC penalty: 5.
+[INFO DPL-0392] Negotiation cell height distribution (1 unique row-count(s)):
+[INFO DPL-0393]   height 1 row(s): 541326 cells
+          |      Total |  Illegal |  Illegal
+Iteration | Violations |    Cells |    Sites
+---------------------------------------------
+        0 |          0 |         0 |         0
+Negotiation phase 1 converged at iteration 0.
+[INFO DPL-0500] Runtime: 4.97s
+Placement Analysis
+---------------------------------
+total displacement          3.7 u
+average displacement        0.0 u
+max displacement            1.6 u
+original HPWL         1600763.5 u
+legalized HPWL        1600763.0 u
+delta HPWL                    0 %
+
+Took 5 seconds: detailed_placement
+global_route -end_incremental -resistance_aware -congestion_report_file /work/util/uacc_hw/openroad/work_full/reports/asap7/uacc_section14_allocator/base/congestion_post_repair_design.rpt
+Took 25 seconds: global_route -end_incremental -resistance_aware -congestion_report_file /work/util/uacc_hw/openroad/work_full/reports/asap7/uacc_section14_allocator/base/congestion_post_repair_design.rpt
+Repair setup and hold violations...
+estimate_parasitics -global_routing
+Took 17 seconds: estimate_parasitics -global_routing
+repair_timing -setup_margin 0 -hold_margin 0 -repair_tns 100 -skip_last_gasp -verbose
+[INFO RSZ-0100] Repair move sequence: UnbufferMove SizeUpMove SwapPinsMove BufferMove CloneMove SplitLoadMove 
+[INFO RSZ-0098] No setup violations found
+[INFO RSZ-0505] Runtime: 22.29s
+[INFO RSZ-0046] Found 170 endpoints with hold violations.
+Iteration | Resized | Buffers | Cloned Gates |   Area   |   WNS   |   TNS   | Endpoint
+--------------------------------------------------------------------------------------
+        0 |       0 |       0 |            0 |    +0.0% | -35.180 | -1670.646 | u39360/D
+       10 |       0 |      18 |            0 |    +0.0% | -20.202 | -1472.293 | u347854/D
+       20 |       0 |      38 |            0 |    +0.0% | -18.843 | -1276.139 | u202669/D
+       30 |       0 |      58 |            0 |    +0.0% | -17.056 | -1096.729 | u347886/D
+       40 |       0 |      78 |            0 |    +0.0% | -15.599 | -931.858 | u195801/D
+       50 |       0 |      98 |            0 |    +0.0% | -14.585 | -779.356 | u347849/D
+       60 |       0 |     118 |            0 |    +0.0% | -13.155 | -638.409 | u347885/D
+       70 |       0 |     137 |            0 |    +0.0% | -12.111 | -510.986 | u357674/D
+       80 |       0 |     151 |            0 |    +0.0% | -12.060 | -397.753 | u39360/D
+       90 |       0 |     161 |            0 |    +0.0% | -12.060 | -304.733 | u39360/D
+      100 |       0 |     171 |            0 |    +0.0% | -12.060 | -229.424 | u39360/D
+      110 |       0 |     181 |            0 |    +0.0% | -12.060 | -166.777 | u39360/D
+      120 |       0 |     191 |            0 |    +0.0% | -12.060 | -116.864 | u39360/D
+      130 |       0 |     201 |            0 |    +0.0% | -12.060 | -80.165 | u39360/D
+      140 |       0 |     211 |            0 |    +0.0% | -12.060 | -52.198 | u39360/D
+      150 |       0 |     221 |            0 |    +0.0% | -12.060 | -31.923 | u39360/D
+      160 |       0 |     231 |            0 |    +0.0% | -12.060 | -18.424 | u39360/D
+      170 |       0 |     241 |            0 |    +0.0% | -12.060 | -13.023 | u39360/D
+    final |       0 |     246 |            0 |    +0.0% |   0.049 |   0.000 | u44392/D
+--------------------------------------------------------------------------------------
+[INFO RSZ-0032] Inserted 246 hold buffers.
+[INFO RSZ-0506] Runtime: 358.15s
+Took 394 seconds: repair_timing -setup_margin 0 -hold_margin 0 -repair_tns 100 -skip_last_gasp -verbose
+global_route -start_incremental
+detailed_placement
+[INFO DPL-0006] Core area: 321948.42 um^2, Movable instances area: 79176.68 um^2, Utilization: 24.6%
+[INFO DPL-0007] Fixed instances area within core: 797.09 um^2, Effective utilization of free area: 24.7%
+[INFO DPL-0005] Diamond search max displacement: +/- 500 sites horizontally, +/- 100 rows vertically.
+[INFO DPL-1102] Legalizing using negotiation legalizer.
+[INFO DPL-1103] Negotiation base search window: +/-20 sites horizontally, +/-5 rows vertically (extendable up to the max displacement cap of +/-500 sites, +/-100 rows near walls).
+	Automatic search window extension enabled.
+[INFO DPL-1104] NegotiationLegalizer DRC penalty: 5.
+[INFO DPL-0392] Negotiation cell height distribution (1 unique row-count(s)):
+[INFO DPL-0393]   height 1 row(s): 541572 cells
+          |      Total |  Illegal |  Illegal
+Iteration | Violations |    Cells |    Sites
+---------------------------------------------
+        0 |          0 |         0 |         0
+Negotiation phase 1 converged at iteration 0.
+[INFO DPL-0500] Runtime: 5.32s
+Placement Analysis
+---------------------------------
+total displacement         73.2 u
+average displacement        0.0 u
+max displacement            1.4 u
+original HPWL         1600813.6 u
+legalized HPWL        1600861.6 u
+delta HPWL                    0 %
+
+Took 7 seconds: detailed_placement
+check_placement -verbose
+global_route -end_incremental -resistance_aware -congestion_report_file /work/util/uacc_hw/openroad/work_full/reports/asap7/uacc_section14_allocator/base/congestion_post_repair_timing.rpt
+estimate_parasitics -global_routing
+Took 16 seconds: estimate_parasitics -global_routing
+repair_timing -setup -sequence "vt_swap reroute" -skip_last_gasp -repair_tns 0 -verbose
+[INFO RSZ-0100] Repair move sequence: RerouteMove 
+[INFO RSZ-0098] No setup violations found
+[INFO RSZ-0505] Runtime: 23.80s
+Took 25 seconds: repair_timing -setup -sequence "vt_swap reroute" -skip_last_gasp -repair_tns 0 -verbose
+Repair antennas...
+[WARNING GRT-0246] No diode with LEF class CORE ANTENNACELL found.
+[INFO ANT-0002] Found 0 net violations.
+[INFO ANT-0001] Found 0 pin violations.
+Estimate parasitics...
+estimate_parasitics -global_routing
+Took 20 seconds: estimate_parasitics -global_routing
+Report metrics stage 5, global route...
+
+==========================================================================
+global route report_design_area
+--------------------------------------------------------------------------
+Design area 79974 um^2 25% utilization.
+[INFO FLW-0007] clock core_clock period 5000.000000
+[INFO FLW-0008] Clock core_clock period 3420.266
+[INFO FLW-0009] Clock core_clock slack 1399.720
+write_sdc -no_timestamp /work/util/uacc_hw/openroad/work_full/results/asap7/uacc_section14_allocator/base/updated_clks.sdc
+[INFO FLW-0011] Path endpoint path count 127610
+write_db /work/util/uacc_hw/openroad/work_full/results/asap7/uacc_section14_allocator/base/5_1_grt.odb
+Took 5 seconds: write_db /work/util/uacc_hw/openroad/work_full/results/asap7/uacc_section14_allocator/base/5_1_grt.odb
+write_sdc -no_timestamp /work/util/uacc_hw/openroad/work_full/results/asap7/uacc_section14_allocator/base/5_1_grt.sdc
+Elapsed time: 25:12.61[h:]min:sec. CPU time: user 9844.00 sys 616.96 (691%). Peak memory: 11501260KB.
+Log                       Ext     Elapsed/s Peak Memory/MB sha1sum result [0:20)
+5_1_grt                   .odb         1512          11231 b03d47a49ce2bacd7ef3
+5_1_grt                   .sdc                             5cfebb8ba957af34f108

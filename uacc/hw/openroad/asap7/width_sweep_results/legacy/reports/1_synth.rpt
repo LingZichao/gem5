@@ -1,0 +1,171 @@
+
+==========================================================================
+synth report_tns
+--------------------------------------------------------------------------
+tns max 0.00
+
+==========================================================================
+synth report_wns
+--------------------------------------------------------------------------
+wns max 0.00
+
+==========================================================================
+synth report_worst_slack
+--------------------------------------------------------------------------
+worst slack max 2896.93
+
+==========================================================================
+synth report_clock_min_period
+--------------------------------------------------------------------------
+core_clock period_min = 2103.07 fmax = 475.50
+
+==========================================================================
+synth report_checks -path_delay min
+--------------------------------------------------------------------------
+Startpoint: u18776 (rising edge-triggered flip-flop clocked by core_clock)
+Endpoint: u14215 (rising edge-triggered flip-flop clocked by core_clock)
+Path Group: core_clock
+Path Type: min
+
+Fanout     Cap    Slew   Delay    Time   Description
+-----------------------------------------------------------------------------
+                  0.00    0.00    0.00   clock core_clock (rise edge)
+                          0.00    0.00   clock network delay (ideal)
+                  0.00    0.00    0.00 ^ u18776/CLK (DFFHQNx1_ASAP7_75t_R)
+     2    1.06   14.98   32.37   32.37 v u18776/QN (DFFHQNx1_ASAP7_75t_R)
+                                         reg_2150[0] (net)
+                 14.98    0.00   32.37 v u14215/D (DFFHQNx1_ASAP7_75t_R)
+                                 32.37   data arrival time
+
+                  0.00    0.00    0.00   clock core_clock (rise edge)
+                          0.00    0.00   clock network delay (ideal)
+                          0.00    0.00   clock reconvergence pessimism
+                                  0.00 ^ u14215/CLK (DFFHQNx1_ASAP7_75t_R)
+                          7.84    7.84   library hold time
+                                  7.84   data required time
+-----------------------------------------------------------------------------
+                                  7.84   data required time
+                                -32.37   data arrival time
+-----------------------------------------------------------------------------
+                                 24.53   slack (MET)
+
+
+
+==========================================================================
+synth report_checks -path_delay max
+--------------------------------------------------------------------------
+Startpoint: lookahead_delta_q0[2] (input port clocked by core_clock)
+Endpoint: candidate_score_q_we0 (output port clocked by core_clock)
+Path Group: core_clock
+Path Type: max
+
+Fanout     Cap    Slew   Delay    Time   Description
+-----------------------------------------------------------------------------
+                  0.00    0.00    0.00   clock core_clock (rise edge)
+                          0.00    0.00   clock network delay (ideal)
+                       1000.00 1000.00 ^ input external delay
+     2    1.92    0.00    0.00 1000.00 ^ lookahead_delta_q0[2] (in)
+                                         lookahead_delta_q0[2] (net)
+                  0.00    0.00 1000.00 ^ u1212/A (INVx1_ASAP7_75t_R)
+     2    1.11    6.02    4.21 1004.21 v u1212/Y (INVx1_ASAP7_75t_R)
+                                         n999 (net)
+                  6.02    0.00 1004.21 v u1214/A (AND2x2_ASAP7_75t_R)
+     1    0.63    5.37   13.87 1018.08 v u1214/Y (AND2x2_ASAP7_75t_R)
+                                         n1001 (net)
+                  5.37    0.00 1018.08 v u1215/A2 (AO21x1_ASAP7_75t_R)
+     1    0.54    6.35   13.08 1031.16 v u1215/Y (AO21x1_ASAP7_75t_R)
+                                         n1002 (net)
+                  6.35    0.00 1031.16 v u1222/A1 (OA211x2_ASAP7_75t_R)
+     1    0.57    9.06   20.94 1052.10 v u1222/Y (OA211x2_ASAP7_75t_R)
+                                         n1009 (net)
+                  9.06    0.00 1052.10 v u1223/B (OR2x2_ASAP7_75t_R)
+     2    1.21    7.59   17.04 1069.14 v u1223/Y (OR2x2_ASAP7_75t_R)
+                                         n1010 (net)
+                  7.59    0.00 1069.14 v u1224/B (AO21x1_ASAP7_75t_R)
+     2    1.29    9.87   17.28 1086.42 v u1224/Y (AO21x1_ASAP7_75t_R)
+                                         n1011 (net)
+                  9.87    0.00 1086.42 v u1236/A (OR3x1_ASAP7_75t_R)
+     1    0.00    4.98   16.64 1103.07 v u1236/Y (OR3x1_ASAP7_75t_R)
+                                         candidate_score_q_we0 (net)
+                  4.98    0.00 1103.07 v candidate_score_q_we0 (out)
+                               1103.07   data arrival time
+
+                  0.00 5000.00 5000.00   clock core_clock (rise edge)
+                          0.00 5000.00   clock network delay (ideal)
+                          0.00 5000.00   clock reconvergence pessimism
+                       -1000.00 4000.00   output external delay
+                               4000.00   data required time
+-----------------------------------------------------------------------------
+                               4000.00   data required time
+                               -1103.07   data arrival time
+-----------------------------------------------------------------------------
+                               2896.93   slack (MET)
+
+
+
+==========================================================================
+synth report_checks -unconstrained
+--------------------------------------------------------------------------
+Startpoint: lookahead_delta_q0[2] (input port clocked by core_clock)
+Endpoint: candidate_score_q_we0 (output port clocked by core_clock)
+Path Group: core_clock
+Path Type: max
+
+Fanout     Cap    Slew   Delay    Time   Description
+-----------------------------------------------------------------------------
+                  0.00    0.00    0.00   clock core_clock (rise edge)
+                          0.00    0.00   clock network delay (ideal)
+                       1000.00 1000.00 ^ input external delay
+     2    1.92    0.00    0.00 1000.00 ^ lookahead_delta_q0[2] (in)
+                                         lookahead_delta_q0[2] (net)
+                  0.00    0.00 1000.00 ^ u1212/A (INVx1_ASAP7_75t_R)
+     2    1.11    6.02    4.21 1004.21 v u1212/Y (INVx1_ASAP7_75t_R)
+                                         n999 (net)
+                  6.02    0.00 1004.21 v u1214/A (AND2x2_ASAP7_75t_R)
+     1    0.63    5.37   13.87 1018.08 v u1214/Y (AND2x2_ASAP7_75t_R)
+                                         n1001 (net)
+                  5.37    0.00 1018.08 v u1215/A2 (AO21x1_ASAP7_75t_R)
+     1    0.54    6.35   13.08 1031.16 v u1215/Y (AO21x1_ASAP7_75t_R)
+                                         n1002 (net)
+                  6.35    0.00 1031.16 v u1222/A1 (OA211x2_ASAP7_75t_R)
+     1    0.57    9.06   20.94 1052.10 v u1222/Y (OA211x2_ASAP7_75t_R)
+                                         n1009 (net)
+                  9.06    0.00 1052.10 v u1223/B (OR2x2_ASAP7_75t_R)
+     2    1.21    7.59   17.04 1069.14 v u1223/Y (OR2x2_ASAP7_75t_R)
+                                         n1010 (net)
+                  7.59    0.00 1069.14 v u1224/B (AO21x1_ASAP7_75t_R)
+     2    1.29    9.87   17.28 1086.42 v u1224/Y (AO21x1_ASAP7_75t_R)
+                                         n1011 (net)
+                  9.87    0.00 1086.42 v u1236/A (OR3x1_ASAP7_75t_R)
+     1    0.00    4.98   16.64 1103.07 v u1236/Y (OR3x1_ASAP7_75t_R)
+                                         candidate_score_q_we0 (net)
+                  4.98    0.00 1103.07 v candidate_score_q_we0 (out)
+                               1103.07   data arrival time
+
+                  0.00 5000.00 5000.00   clock core_clock (rise edge)
+                          0.00 5000.00   clock network delay (ideal)
+                          0.00 5000.00   clock reconvergence pessimism
+                       -1000.00 4000.00   output external delay
+                               4000.00   data required time
+-----------------------------------------------------------------------------
+                               4000.00   data required time
+                               -1103.07   data arrival time
+-----------------------------------------------------------------------------
+                               2896.93   slack (MET)
+
+
+
+==========================================================================
+synth report_power
+--------------------------------------------------------------------------
+Group                  Internal  Switching    Leakage      Total
+                          Power      Power      Power      Power (Watts)
+----------------------------------------------------------------
+Sequential             1.09e-02   2.43e-04   2.26e-06   1.11e-02   8.4%
+Combinational          8.24e-02   3.93e-02   1.29e-05   1.22e-01  91.6%
+Clock                  0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+Macro                  0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+Pad                    0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+----------------------------------------------------------------
+Total                  9.33e-02   3.96e-02   1.52e-05   1.33e-01 100.0%
+                          70.2%      29.8%       0.0%

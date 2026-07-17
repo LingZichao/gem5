@@ -1,0 +1,4 @@
+area_or_footprint_mm2,logical_capacity_mib,media_response_at_25_gb_s_ns,normalized_performance_at_25_gb_s,peak_or_measured_bandwidth_gb_s,physical_capacity,power_at_10_gb_s_w,status_at_25_gb_s,technology
+23.2107870748,8,2.601698675253066,0.9901388835989109,49.41703343371169,8 MiB,0.5417398125,stable,SRAM
+9.9350706924,8,161.64133414034288,0.27319128480694904,23.08927250753107,8 MiB,0.46385453125,backpressure_limited,eDRAM
+91.99249999999999,8,120.34766553684459,0.33644453988166445,178.90688,4 GiB stack,0.312,stable,HBM2

@@ -1,0 +1,72 @@
+OpenROAD 26Q3-463-gbde79242a0 
+Features included (+) or not (-): +GPU +GUI +Python
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+[INFO ORD-0030] Using 16 thread(s).
+source /OpenROAD-flow-scripts/flow/platforms/asap7/liberty_suppressions.tcl
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_AO_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_INVBUF_RVT_FF_nldm_220122.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_OA_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SIMPLE_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SEQ_RVT_FF_nldm_220123.lib
+read_db /work/util/uacc_hw/openroad/work_width_sweep/results/asap7/uacc_section14_allocator_width_sweep/base/3_3_place_gp.odb
+read_sdc /work/util/uacc_hw/openroad/work_width_sweep/results/asap7/uacc_section14_allocator_width_sweep/base/2_floorplan.sdc
+source /OpenROAD-flow-scripts/flow/platforms/asap7/setRC.tcl
+estimate_parasitics -placement
+Perform buffer insertion and gate resizing...
+repair_design -verbose
+Iteration |   Area    | Resized | Buffers | Nets repaired | Remaining
+---------------------------------------------------------------------
+        0 |     +0.0% |       0 |       0 |             0 |     35765
+     1000 |     +0.0% |       0 |       0 |             0 |     34765
+     2000 |     +0.0% |       0 |       0 |             0 |     33765
+     3000 |     +0.0% |       0 |       0 |             0 |     32765
+     4000 |     +0.0% |       0 |       0 |             0 |     31765
+     5000 |     +0.0% |       0 |       0 |             0 |     30765
+     6000 |     +0.0% |       0 |       0 |             0 |     29765
+     7000 |     +0.0% |       0 |       0 |             0 |     28765
+     8000 |     +0.0% |       0 |       0 |             0 |     27765
+     9000 |     +0.0% |       0 |       0 |             0 |     26765
+    10000 |     +0.0% |       0 |       0 |             0 |     25765
+    11000 |     +0.0% |       0 |       0 |             0 |     24765
+    12000 |     +0.0% |       0 |       0 |             0 |     23765
+    13000 |     +0.0% |       0 |       0 |             0 |     22765
+    14000 |     +0.0% |       0 |       0 |             0 |     21765
+    15000 |     +0.0% |       0 |       0 |             0 |     20765
+    16000 |     +0.0% |       0 |       0 |             0 |     19765
+    17000 |     +0.0% |       0 |       0 |             0 |     18765
+    18000 |     +0.0% |       0 |       0 |             0 |     17765
+    19000 |     +0.0% |       0 |       0 |             0 |     16765
+    20000 |     +0.0% |       0 |       0 |             0 |     15765
+    21000 |     +0.0% |       0 |       0 |             0 |     14765
+    22000 |     +0.0% |       0 |       0 |             0 |     13765
+    23000 |     +0.0% |       0 |       0 |             0 |     12765
+    24000 |     +0.0% |       0 |       0 |             0 |     11765
+    25000 |     +0.0% |       0 |       0 |             0 |     10765
+    26000 |     +0.0% |       0 |       0 |             0 |      9765
+    27000 |     +0.0% |       0 |       0 |             0 |      8765
+    28000 |     +0.0% |       0 |       0 |             0 |      7765
+    29000 |     +0.0% |       0 |       0 |             0 |      6765
+    30000 |     +0.0% |       0 |       0 |             0 |      5765
+    31000 |     +0.0% |       0 |       0 |             0 |      4765
+    32000 |     +0.0% |       0 |       0 |             0 |      3765
+    33000 |     +0.0% |       0 |       0 |             0 |      2765
+    34000 |     +0.0% |       0 |       0 |             0 |      1765
+    35000 |     +0.0% |       0 |       0 |             0 |       765
+    final |     +0.0% |       0 |       0 |             0 |         0
+---------------------------------------------------------------------
+[INFO RSZ-0504] Runtime: 2.65s
+Took 5 seconds: repair_design -verbose
+Floating nets: 
+Report metrics stage 3, resizer...
+
+==========================================================================
+resizer report_design_area
+--------------------------------------------------------------------------
+Design area 5011 um^2 24% utilization.
+Instance count before 37642, after 37642
+Pin count before 120563, after 120563
+write_db /work/util/uacc_hw/openroad/work_width_sweep/results/asap7/uacc_section14_allocator_width_sweep/base/3_4_place_resized.odb
+Elapsed time: 0:11.12[h:]min:sec. CPU time: user 16.58 sys 6.40 (206%). Peak memory: 383608KB.
+Log                       Ext     Elapsed/s Peak Memory/MB sha1sum result [0:20)
+3_4_place_resized         .odb           11            374 8f8a23488b1ef83bca46

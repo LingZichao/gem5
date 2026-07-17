@@ -1,0 +1,122 @@
+OpenROAD 26Q3-463-gbde79242a0 
+Features included (+) or not (-): +GPU +GUI +Python
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+[INFO ORD-0030] Using 16 thread(s).
+source /OpenROAD-flow-scripts/flow/platforms/asap7/liberty_suppressions.tcl
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_AO_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_INVBUF_RVT_FF_nldm_220122.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_OA_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SIMPLE_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SEQ_RVT_FF_nldm_220123.lib
+read_db /work/util/uacc_hw/openroad/work_precision_f4/results/asap7/uacc_section14_allocator_precision_sweep/base/3_place.odb
+read_sdc /work/util/uacc_hw/openroad/work_precision_f4/results/asap7/uacc_section14_allocator_precision_sweep/base/3_place.sdc
+source /OpenROAD-flow-scripts/flow/platforms/asap7/setRC.tcl
+clock_tree_synthesis -sink_clustering_enable -repair_clock_nets
+[INFO CTS-0050] Root buffer is BUFx24_ASAP7_75t_R.
+[INFO CTS-0051] Sink buffer is BUFx24_ASAP7_75t_R.
+[INFO CTS-0052] The following clock buffers will be used for CTS:
+                    BUFx24_ASAP7_75t_R
+[INFO CTS-0049] Characterization buffer is BUFx24_ASAP7_75t_R.
+[INFO CTS-0007] Net "ap_clk" found for clock "core_clock".
+[INFO CTS-0010]  Clock net "ap_clk" has 15641 sinks.
+[INFO CTS-0008] TritonCTS found 1 clock nets.
+[INFO CTS-0097] Characterization used 1 buffer(s) types.
+[INFO CTS-0201] 0 blockages from hard placement blockages and placed macros will be used.
+[INFO CTS-0027] Generating H-Tree topology for net ap_clk.
+[INFO CTS-0028]  Total number of sinks: 15641.
+[INFO CTS-0090]  Sinks will be clustered based on buffer max cap.
+[INFO CTS-0030]  Number of static layers: 0.
+[INFO CTS-0020]  Wire segment unit: 1350  dbu (1 um).
+[INFO CTS-0206] Best clustering solution was found from max clustering size of 26 and max clustering diameter of 55.
+[INFO CTS-0019]  Total number of sinks after clustering: 824.
+[INFO CTS-0024]  Normalized sink region: [(3.44785, 4.21111), (195.391, 203.01)].
+[INFO CTS-0025]     Width:  191.9428.
+[INFO CTS-0026]     Height: 198.7989.
+ Level 1
+    Direction: Vertical
+    Sinks per sub-region: 412
+    Sub-region size: 191.9428 X 99.3994
+[INFO CTS-0034]     Segment length (rounded): 50.
+ Level 2
+    Direction: Horizontal
+    Sinks per sub-region: 206
+    Sub-region size: 95.9714 X 99.3994
+[INFO CTS-0034]     Segment length (rounded): 48.
+ Level 3
+    Direction: Vertical
+    Sinks per sub-region: 103
+    Sub-region size: 95.9714 X 49.6997
+[INFO CTS-0034]     Segment length (rounded): 24.
+ Level 4
+    Direction: Horizontal
+    Sinks per sub-region: 52
+    Sub-region size: 47.9857 X 49.6997
+[INFO CTS-0034]     Segment length (rounded): 24.
+ Level 5
+    Direction: Vertical
+    Sinks per sub-region: 26
+    Sub-region size: 47.9857 X 24.8499
+[INFO CTS-0034]     Segment length (rounded): 12.
+ Level 6
+    Direction: Horizontal
+    Sinks per sub-region: 13
+    Sub-region size: 23.9929 X 24.8499
+[INFO CTS-0034]     Segment length (rounded): 12.
+[INFO CTS-0038]  Stop criterion found. Sink region hpwl is smaller than max wirelength (121.234 um) and max number of sinks is 15.
+[INFO CTS-0035]  Number of sinks covered: 824.
+[INFO CTS-0018]     Created 939 clock buffers.
+[INFO CTS-0012]     Minimum number of buffers in the clock path: 8.
+[INFO CTS-0013]     Maximum number of buffers in the clock path: 8.
+[INFO CTS-0015]     Created 939 clock nets.
+[INFO CTS-0016]     Fanout distribution for the current clock = 5:5, 6:4, 7:5, 8:10, 9:21, 10:14, 11:16, 12:21, 13:20, 14:29, 15:32, 16:37, 17:52, 18:71, 19:117, 20:107, 21:121, 22:89, 23:59, 24:34, 25:15, 26:9..
+[INFO CTS-0017]     Max level of the clock tree: 6.
+[INFO CTS-0098] Clock net "ap_clk"
+[INFO CTS-0099]  Sinks 16409
+[INFO CTS-0100]  Leaf buffers 824
+[INFO CTS-0101]  Average sink wire length 500.55 um
+[INFO CTS-0102]  Path depth 7 - 8
+[INFO CTS-0207]  Dummy loads inserted 768
+[INFO RSZ-0047] Found 1 long wires.
+[INFO RSZ-0048] Inserted 2 buffers in 1 nets.
+[INFO CTS-0500] Runtime: 7.90s
+Took 8 seconds: clock_tree_synthesis -sink_clustering_enable -repair_clock_nets
+estimate_parasitics -placement
+detailed_placement
+[INFO DPL-0006] Core area: 74468.37 um^2, Movable instances area: 18225.00 um^2, Utilization: 24.5%
+[INFO DPL-0007] Fixed instances area within core: 206.45 um^2, Effective utilization of free area: 24.5%
+[INFO DPL-0005] Diamond search max displacement: +/- 500 sites horizontally, +/- 100 rows vertically.
+[INFO DPL-1102] Legalizing using negotiation legalizer.
+[INFO DPL-1103] Negotiation base search window: +/-20 sites horizontally, +/-5 rows vertically (extendable up to the max displacement cap of +/-500 sites, +/-100 rows near walls).
+	Automatic search window extension enabled.
+[INFO DPL-1104] NegotiationLegalizer DRC penalty: 5.
+[INFO DPL-0392] Negotiation cell height distribution (1 unique row-count(s)):
+[INFO DPL-0393]   height 1 row(s): 135267 cells
+          |      Total |  Illegal |  Illegal
+Iteration | Violations |    Cells |    Sites
+---------------------------------------------
+        0 |          0 |         0 |         0
+Negotiation phase 1 converged at iteration 0.
+[INFO DPL-0500] Runtime: 5.60s
+Placement Analysis
+---------------------------------
+total displacement      16182.9 u
+average displacement        0.1 u
+max displacement            2.2 u
+original HPWL          455139.5 u
+legalized HPWL         464016.8 u
+delta HPWL                    2 %
+
+Took 6 seconds: detailed_placement
+estimate_parasitics -placement
+Report metrics stage 4, cts final...
+
+==========================================================================
+cts final report_design_area
+--------------------------------------------------------------------------
+Design area 18431 um^2 25% utilization.
+write_db /work/util/uacc_hw/openroad/work_precision_f4/results/asap7/uacc_section14_allocator_precision_sweep/base/4_1_cts.odb
+write_sdc -no_timestamp /work/util/uacc_hw/openroad/work_precision_f4/results/asap7/uacc_section14_allocator_precision_sweep/base/4_cts.sdc
+Elapsed time: 1:01.98[h:]min:sec. CPU time: user 115.36 sys 43.00 (255%). Peak memory: 1426884KB.
+Log                       Ext     Elapsed/s Peak Memory/MB sha1sum result [0:20)
+4_1_cts                   .odb           61           1393 14927a7d3511e600642b

@@ -1,0 +1,43 @@
+OpenROAD 26Q3-463-gbde79242a0 
+Features included (+) or not (-): +GPU +GUI +Python
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+[INFO ORD-0030] Using 16 thread(s).
+source /OpenROAD-flow-scripts/flow/platforms/asap7/liberty_suppressions.tcl
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_AO_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_INVBUF_RVT_FF_nldm_220122.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_OA_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SIMPLE_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SEQ_RVT_FF_nldm_220123.lib
+read_db /work/util/uacc_hw/openroad/work_precision_f2/results/asap7/uacc_section14_allocator_precision_sweep/base/6_1_fill.odb
+read_sdc /work/util/uacc_hw/openroad/work_precision_f2/results/asap7/uacc_section14_allocator_precision_sweep/base/6_1_fill.sdc
+source /OpenROAD-flow-scripts/flow/platforms/asap7/setRC.tcl
+write_db /work/util/uacc_hw/openroad/work_precision_f2/results/asap7/uacc_section14_allocator_precision_sweep/base/6_final.odb
+Deleted 0 routing obstructions
+OpenRCX is not enabled for this platform.
+Falling back to global route-based estimates.
+estimate_parasitics -global_routing
+Took 10 seconds: estimate_parasitics -global_routing
+Cell type report:                       Count       Area
+  Fill cell                            313279   56330.54
+  Tap cell                               7101     207.07
+  Tie cell                                 12       0.52
+  Clock buffer                           1370     505.44
+  Timing Repair Buffer                   3338     298.18
+  Inverter                              10140     451.41
+  Clock inverter                          393      74.62
+  Sequential cell                       16378    4780.75
+  Multi-Input combinational cell        97192   12233.03
+  Total                                449203   74881.57
+Report metrics stage 6, finish...
+
+==========================================================================
+finish report_design_area
+--------------------------------------------------------------------------
+Design area 18551 um^2 25% utilization.
+[WARNING GUI-0076] QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+[WARNING GUI-0066] Heat map "IR Drop" has not been populated with data.
+[WARNING GUI-0066] Heat map "Routing Congestion" has not been populated with data.
+Elapsed time: 0:59.89[h:]min:sec. CPU time: user 93.75 sys 27.23 (201%). Peak memory: 2450244KB.
+Log                       Ext     Elapsed/s Peak Memory/MB sha1sum result [0:20)
+6_report                                 59           2392                  N/A

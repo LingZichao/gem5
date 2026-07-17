@@ -1,0 +1,462 @@
+OpenROAD 26Q3-463-gbde79242a0 
+Features included (+) or not (-): +GPU +GUI +Python
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+[INFO ORD-0030] Using 16 thread(s).
+source /OpenROAD-flow-scripts/flow/platforms/asap7/liberty_suppressions.tcl
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_AO_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_INVBUF_RVT_FF_nldm_220122.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_OA_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SIMPLE_RVT_FF_nldm_211120.lib.gz
+read_liberty /OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SEQ_RVT_FF_nldm_220123.lib
+read_db /work/util/uacc_hw/openroad/work_width_sweep/results/asap7/uacc_section14_allocator_width_sweep/base/4_cts.odb
+read_sdc /work/util/uacc_hw/openroad/work_width_sweep/results/asap7/uacc_section14_allocator_width_sweep/base/4_cts.sdc
+source /OpenROAD-flow-scripts/flow/platforms/asap7/setRC.tcl
+pin_access
+[INFO DRT-0149] Reading tech and libs.
+
+Units:                1000
+Number of layers:     21
+Number of macros:     212
+Number of vias:       14
+Number of viarulegen: 11
+
+[INFO DRT-0150] Reading design.
+[WARNING DRT-0120] Large net net3650 has 106 pins which may impact routing performance. Consider optimization.
+
+Design:                   uacc_section14_allocator_uacc_section14_allocator
+Die area:                 ( 0 0 ) ( 152125 152125 )
+Number of track patterns: 32
+Number of DEF vias:       0
+Number of components:     38246
+Number of terminals:      826
+Number of snets:          2
+Number of nets:           36114
+
+[INFO DRT-0167] List of default vias:
+  Layer V2
+    default via: VIA23
+  Layer V3
+    default via: VIA34
+  Layer V4
+    default via: VIA45
+  Layer V5
+    default via: VIA56
+  Layer V6
+    default via: VIA67
+  Layer V7
+    default via: VIA78
+  Layer V8
+    default via: VIA89
+  Layer V9
+    default via: VIA9Pad
+[INFO DRT-0162] Library cell analysis.
+[INFO DRT-0163] Instance analysis.
+[INFO DRT-0164] Number of unique instances = 235.
+[INFO DRT-0168] Init region query.
+[INFO DRT-0024]   Complete Active.
+[INFO DRT-0024]   Complete V0.
+[INFO DRT-0024]   Complete M1.
+[INFO DRT-0024]   Complete V1.
+[INFO DRT-0024]   Complete M2.
+[INFO DRT-0024]   Complete V2.
+[INFO DRT-0024]   Complete M3.
+[INFO DRT-0024]   Complete V3.
+[INFO DRT-0024]   Complete M4.
+[INFO DRT-0024]   Complete V4.
+[INFO DRT-0024]   Complete M5.
+[INFO DRT-0024]   Complete V5.
+[INFO DRT-0024]   Complete M6.
+[INFO DRT-0024]   Complete V6.
+[INFO DRT-0024]   Complete M7.
+[INFO DRT-0024]   Complete V7.
+[INFO DRT-0024]   Complete M8.
+[INFO DRT-0024]   Complete V8.
+[INFO DRT-0024]   Complete M9.
+[INFO DRT-0024]   Complete V9.
+[INFO DRT-0024]   Complete Pad.
+[INFO DRT-0033] Active shape region query size = 0.
+[INFO DRT-0033] V0 shape region query size = 0.
+[INFO DRT-0033] M1 shape region query size = 764170.
+[INFO DRT-0033] V1 shape region query size = 2245549.
+[INFO DRT-0033] M2 shape region query size = 32594.
+[INFO DRT-0033] V2 shape region query size = 43821.
+[INFO DRT-0033] M3 shape region query size = 43821.
+[INFO DRT-0033] V3 shape region query size = 29214.
+[INFO DRT-0033] M4 shape region query size = 29547.
+[INFO DRT-0033] V4 shape region query size = 29214.
+[INFO DRT-0033] M5 shape region query size = 16610.
+[INFO DRT-0033] V5 shape region query size = 2916.
+[INFO DRT-0033] M6 shape region query size = 1566.
+[INFO DRT-0033] V6 shape region query size = 0.
+[INFO DRT-0033] M7 shape region query size = 0.
+[INFO DRT-0033] V7 shape region query size = 0.
+[INFO DRT-0033] M8 shape region query size = 0.
+[INFO DRT-0033] V8 shape region query size = 0.
+[INFO DRT-0033] M9 shape region query size = 0.
+[INFO DRT-0033] V9 shape region query size = 0.
+[INFO DRT-0033] Pad shape region query size = 0.
+[INFO DRT-0165] Start pin access.
+[INFO DRT-0076]   Complete 1000 pins.
+[INFO DRT-0078]   Complete 1320 pins.
+[INFO DRT-0079]   Complete 100 unique inst patterns.
+[INFO DRT-0079]   Complete 200 unique inst patterns.
+[INFO DRT-0081]   Complete 235 unique inst patterns.
+[INFO DRT-0082]   Complete 10000 groups.
+[INFO DRT-0082]   Complete 20000 groups.
+[INFO DRT-0084]   Complete 26474 groups.
+#scanned instances     = 38246
+#unique  instances     = 235
+#stdCellGenAp          = 6296
+#stdCellValidPlanarAp  = 11
+#stdCellValidViaAp     = 5111
+#stdCellPinNoAp        = 0
+#stdCellPinCnt         = 121508
+#instTermValidViaApCnt = 0
+#macroGenAp            = 0
+#macroValidPlanarAp    = 0
+#macroValidViaAp       = 0
+#macroNoAp             = 0
+[INFO DRT-0166] Complete pin access.
+[INFO DRT-0267] cpu time = 00:07:26, elapsed time = 00:00:28, memory = 424.11 (MB), peak = 489.61 (MB)
+Took 29 seconds: pin_access
+global_route -congestion_report_file /work/util/uacc_hw/openroad/work_width_sweep/reports/asap7/uacc_section14_allocator_width_sweep/base/congestion.rpt -congestion_iterations 30 -congestion_report_iter_step 5 -verbose -resistance_aware
+[INFO GRT-0020] Min routing layer: M2
+[INFO GRT-0021] Max routing layer: M7
+[INFO GRT-0022] Global adjustment: 0%
+[INFO GRT-0023] Grid origin: (0, 0)
+[INFO GRT-0088] Layer M1      Track-Pitch = 0.0360  line-2-Via Pitch: 0.0360
+[INFO GRT-0088] Layer M2      Track-Pitch = 0.0390  line-2-Via Pitch: 0.0360
+[INFO GRT-0088] Layer M3      Track-Pitch = 0.0360  line-2-Via Pitch: 0.0360
+[INFO GRT-0088] Layer M4      Track-Pitch = 0.0480  line-2-Via Pitch: 0.0480
+[INFO GRT-0088] Layer M5      Track-Pitch = 0.0480  line-2-Via Pitch: 0.0480
+[INFO GRT-0088] Layer M6      Track-Pitch = 0.0640  line-2-Via Pitch: 0.0640
+[INFO GRT-0088] Layer M7      Track-Pitch = 0.0640  line-2-Via Pitch: 0.0640
+[INFO GRT-0003] Macros: 0
+[INFO GRT-0004] Blockages: 16902
+[INFO GRT-0019] Found 350 clock nets.
+[INFO GRT-0001] Minimum degree: 2
+[INFO GRT-0002] Maximum degree: 106
+
+[INFO GRT-0053] Routing resources analysis:
+          Routing      Original      Derated      Resource
+Layer     Direction    Resources     Resources    Reduction (%)
+---------------------------------------------------------------
+M1         Vertical            0             0          0.00%
+M2         Horizontal     869325        626512          27.93%
+M3         Vertical      1076884        799737          25.74%
+M4         Horizontal     824395        612244          25.73%
+M5         Vertical       797034        590895          25.86%
+M6         Horizontal     557201        376658          32.40%
+M7         Vertical       629905        424530          32.60%
+---------------------------------------------------------------
+
+[INFO GRT-0197] Via related to pin nodes: 240286
+[INFO GRT-0198] Via related Steiner nodes: 6319
+[INFO GRT-0199] Via filling finished.
+[INFO GRT-0111] Final number of vias: 313538
+[INFO GRT-0112] Final usage 3D: 1181946
+
+[INFO GRT-0096] Final congestion report:
+Layer         Resource        Demand        Usage (%)    Max H / Max V / Total Congestion
+---------------------------------------------------------------------------------------
+M1                   0             0            0.00%             0 /  0 /  0
+M2              626512        103775           16.56%             0 /  0 /  0
+M3              799737        108857           13.61%             0 /  0 /  0
+M4              612244          9717            1.59%             0 /  0 /  0
+M5              590895          5783            0.98%             0 /  0 /  0
+M6              376658          7772            2.06%             0 /  0 /  0
+M7              424530          5428            1.28%             0 /  0 /  0
+---------------------------------------------------------------------------------------
+Total          3430576        241332            7.03%             0 /  0 /  0
+
+[INFO GRT-0018] Total wirelength: 1931154 um
+[INFO GRT-0014] Routed nets: 35955
+[INFO GRT-0303] Global routing runtime = 00:00:12
+Took 12 seconds: global_route -congestion_report_file /work/util/uacc_hw/openroad/work_width_sweep/reports/asap7/uacc_section14_allocator_width_sweep/base/congestion.rpt -congestion_iterations 30 -congestion_report_iter_step 5 -verbose -resistance_aware
+estimate_parasitics -global_routing
+Perform buffer insertion and gate resizing...
+repair_design -verbose
+Iteration |   Area    | Resized | Buffers | Nets repaired | Remaining
+---------------------------------------------------------------------
+        0 |     +0.0% |       0 |       0 |             0 |     36369
+     1000 |     +0.0% |       0 |       0 |             0 |     35369
+     2000 |     +0.0% |       0 |       0 |             0 |     34369
+     3000 |     +0.0% |       0 |       0 |             0 |     33369
+     4000 |     +0.0% |       0 |       0 |             0 |     32369
+     5000 |     +0.0% |       0 |       0 |             0 |     31369
+     6000 |     +0.0% |       0 |       0 |             0 |     30369
+     7000 |     +0.0% |       0 |       0 |             0 |     29369
+     8000 |     +0.0% |       0 |       0 |             0 |     28369
+     9000 |     +0.0% |       0 |       0 |             0 |     27369
+    10000 |     +0.0% |       0 |       0 |             0 |     26369
+    11000 |     +0.0% |       0 |       0 |             0 |     25369
+    12000 |     +0.0% |       0 |       0 |             0 |     24369
+    13000 |     +0.0% |       0 |       0 |             0 |     23369
+    14000 |     +0.0% |       0 |       0 |             0 |     22369
+    15000 |     +0.0% |       0 |       0 |             0 |     21369
+    16000 |     +0.0% |       0 |       0 |             0 |     20369
+    17000 |     +0.0% |       0 |       0 |             0 |     19369
+    18000 |     +0.0% |       0 |       0 |             0 |     18369
+    19000 |     +0.0% |       0 |       0 |             0 |     17369
+    20000 |     +0.0% |       0 |       0 |             0 |     16369
+    21000 |     +0.0% |       0 |       0 |             0 |     15369
+    22000 |     +0.0% |       0 |       0 |             0 |     14369
+    23000 |     +0.0% |       0 |       0 |             0 |     13369
+    24000 |     +0.0% |       0 |       0 |             0 |     12369
+    25000 |     +0.0% |       0 |       0 |             0 |     11369
+    26000 |     +0.0% |       0 |       0 |             0 |     10369
+    27000 |     +0.0% |       0 |       0 |             0 |      9369
+    28000 |     +0.0% |       0 |       0 |             0 |      8369
+    29000 |     +0.0% |       0 |       0 |             0 |      7369
+    30000 |     +0.0% |       0 |       0 |             0 |      6369
+    31000 |     +0.0% |       0 |       0 |             0 |      5369
+    32000 |     +0.0% |       0 |       0 |             0 |      4369
+    33000 |     +0.0% |       0 |       0 |             0 |      3369
+    34000 |     +0.0% |       0 |       0 |             0 |      2369
+    35000 |     +0.0% |       0 |       0 |             0 |      1369
+[WARNING RSZ-0104] Net service_square_q0[15] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[14] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[13] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[12] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_square_q0[11] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q0[7] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net service_cycles_q0[6] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net observed_wait_sum_q0[31] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net observed_wait_sum_q0[30] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net observed_wait_sum_q0[29] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net lookahead_delta_q0[7] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net lookahead_delta_q0[6] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net lookahead_delta_q0[5] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net lookahead_delta_q0[4] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_sum_q0[31] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_sum_q0[30] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_sum_q0[29] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_sum_q0[28] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_sum_q0[27] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_sum_q0[26] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_sum_q0[25] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_sum_q0[24] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_sum_q0[23] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_sum_q0[22] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_sum_q0[21] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_sum_q0[20] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_sum_q0[19] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_sum_q0[18] only has one pin. Check if it is intended to be dangling.
+    36000 |     +0.0% |       0 |       0 |             0 |       369
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[63] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[62] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[61] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[60] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[59] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[58] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[57] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[56] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[55] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[54] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[53] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[52] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[51] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[50] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[49] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[48] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[47] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[46] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[45] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[44] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[43] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[42] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[41] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[40] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[39] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[38] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[37] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[36] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_square_sum_q0[35] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[31] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[30] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[29] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[28] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[27] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[26] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[25] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[24] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[23] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[22] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[21] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[20] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[19] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[18] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net interarrival_samples_q0[17] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net fixed_latency_q_q0[15] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net fixed_latency_q_q0[14] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net collector_overflow_q0[7] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net collector_overflow_q0[6] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net collector_overflow_q0[5] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net collector_overflow_q0[4] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net collector_overflow_q0[3] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net collector_overflow_q0[2] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net collector_overflow_q0[1] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[63] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[62] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[61] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[60] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[59] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[58] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[57] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[56] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[55] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[54] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[53] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[52] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[51] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[50] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[49] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[48] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[47] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[46] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[45] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[44] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[43] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[42] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[41] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[40] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[39] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net capacity_gain_q_q0[38] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_valid_q0[7] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_valid_q0[6] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_valid_q0[5] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_valid_q0[4] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_valid_q0[3] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_valid_q0[2] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_valid_q0[1] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[31] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[30] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[29] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[28] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[27] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[26] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[25] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[24] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[23] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[22] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[21] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[20] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[19] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[18] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net candidate_class_count_q0[17] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[31] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[30] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[29] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[28] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[27] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[26] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[25] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[24] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[23] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[22] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[21] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[20] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[19] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[18] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net buffer_full_count_q0[17] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[31] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[30] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[29] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[28] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[27] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[26] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[25] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[24] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[23] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[22] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[21] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[20] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[19] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[18] only has one pin. Check if it is intended to be dangling.
+[WARNING RSZ-0104] Net backpressure_count_q0[17] only has one pin. Check if it is intended to be dangling.
+    final |     +0.0% |       0 |       0 |             0 |         0
+---------------------------------------------------------------------
+[INFO RSZ-0504] Runtime: 2.86s
+Took 5 seconds: repair_design -verbose
+global_route -start_incremental
+detailed_placement
+[INFO DPL-0006] Core area: 21297.01 um^2, Movable instances area: 5139.87 um^2, Utilization: 24.1%
+[INFO DPL-0007] Fixed instances area within core: 71.00 um^2, Effective utilization of free area: 24.2%
+[INFO DPL-0005] Diamond search max displacement: +/- 500 sites horizontally, +/- 100 rows vertically.
+[INFO DPL-1102] Legalizing using negotiation legalizer.
+[INFO DPL-1103] Negotiation base search window: +/-20 sites horizontally, +/-5 rows vertically (extendable up to the max displacement cap of +/-500 sites, +/-100 rows near walls).
+	Automatic search window extension enabled.
+[INFO DPL-1104] NegotiationLegalizer DRC penalty: 5.
+[INFO DPL-0392] Negotiation cell height distribution (1 unique row-count(s)):
+[INFO DPL-0393]   height 1 row(s): 38246 cells
+[INFO DPL-0500] Runtime: 0.23s
+Placement Analysis
+---------------------------------
+total displacement          0.0 u
+average displacement        0.0 u
+max displacement            0.0 u
+original HPWL          111147.3 u
+legalized HPWL         111147.3 u
+delta HPWL                    0 %
+
+global_route -end_incremental -resistance_aware -congestion_report_file /work/util/uacc_hw/openroad/work_width_sweep/reports/asap7/uacc_section14_allocator_width_sweep/base/congestion_post_repair_design.rpt
+Repair setup and hold violations...
+estimate_parasitics -global_routing
+repair_timing -setup_margin 0 -hold_margin 0 -repair_tns 100 -skip_last_gasp -verbose
+[INFO RSZ-0100] Repair move sequence: UnbufferMove SizeUpMove SwapPinsMove BufferMove CloneMove SplitLoadMove 
+[INFO RSZ-0098] No setup violations found
+[INFO RSZ-0505] Runtime: 1.06s
+[INFO RSZ-0033] No hold violations found.
+[INFO RSZ-0506] Runtime: 0.30s
+global_route -start_incremental
+detailed_placement
+[INFO DPL-0006] Core area: 21297.01 um^2, Movable instances area: 5139.87 um^2, Utilization: 24.1%
+[INFO DPL-0007] Fixed instances area within core: 71.00 um^2, Effective utilization of free area: 24.2%
+[INFO DPL-0005] Diamond search max displacement: +/- 500 sites horizontally, +/- 100 rows vertically.
+[INFO DPL-1102] Legalizing using negotiation legalizer.
+[INFO DPL-1103] Negotiation base search window: +/-20 sites horizontally, +/-5 rows vertically (extendable up to the max displacement cap of +/-500 sites, +/-100 rows near walls).
+	Automatic search window extension enabled.
+[INFO DPL-1104] NegotiationLegalizer DRC penalty: 5.
+[INFO DPL-0392] Negotiation cell height distribution (1 unique row-count(s)):
+[INFO DPL-0393]   height 1 row(s): 38246 cells
+[INFO DPL-0500] Runtime: 0.23s
+Placement Analysis
+---------------------------------
+total displacement          0.0 u
+average displacement        0.0 u
+max displacement            0.0 u
+original HPWL          111147.3 u
+legalized HPWL         111147.3 u
+delta HPWL                    0 %
+
+check_placement -verbose
+global_route -end_incremental -resistance_aware -congestion_report_file /work/util/uacc_hw/openroad/work_width_sweep/reports/asap7/uacc_section14_allocator_width_sweep/base/congestion_post_repair_timing.rpt
+estimate_parasitics -global_routing
+repair_timing -setup -sequence "vt_swap reroute" -skip_last_gasp -repair_tns 0 -verbose
+[INFO RSZ-0100] Repair move sequence: RerouteMove 
+[INFO RSZ-0098] No setup violations found
+[INFO RSZ-0505] Runtime: 1.11s
+Repair antennas...
+[WARNING GRT-0246] No diode with LEF class CORE ANTENNACELL found.
+[INFO ANT-0002] Found 0 net violations.
+[INFO ANT-0001] Found 0 pin violations.
+Estimate parasitics...
+estimate_parasitics -global_routing
+Report metrics stage 5, global route...
+
+==========================================================================
+global route report_design_area
+--------------------------------------------------------------------------
+Design area 5211 um^2 24% utilization.
+[INFO FLW-0007] clock core_clock period 5000.000000
+[INFO FLW-0008] Clock core_clock period 2001.906
+[INFO FLW-0009] Clock core_clock slack 2892.731
+write_sdc -no_timestamp /work/util/uacc_hw/openroad/work_width_sweep/results/asap7/uacc_section14_allocator_width_sweep/base/updated_clks.sdc
+[INFO FLW-0011] Path endpoint path count 6147
+write_db /work/util/uacc_hw/openroad/work_width_sweep/results/asap7/uacc_section14_allocator_width_sweep/base/5_1_grt.odb
+write_sdc -no_timestamp /work/util/uacc_hw/openroad/work_width_sweep/results/asap7/uacc_section14_allocator_width_sweep/base/5_1_grt.sdc
+Elapsed time: 1:01.89[h:]min:sec. CPU time: user 547.54 sys 28.63 (930%). Peak memory: 1179372KB.
+Log                       Ext     Elapsed/s Peak Memory/MB sha1sum result [0:20)
+5_1_grt                   .odb           61           1151 fd78c64499784365007c
+5_1_grt                   .sdc                             12a5353b5e4c735db766
